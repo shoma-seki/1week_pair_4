@@ -9,8 +9,13 @@ public class Audience : MonoBehaviour
     [SerializeField] private float returnDelay = 1f;
     [SerializeField] private InterpolationType interpolationType = InterpolationType.Linear;
 
+    [Header("Dance Noise")]
+    [SerializeField] private float danceAmplitude = 0.2f;
+    [SerializeField] private float danceFrequency = 8f;
+
     [Header("Visual")]
-    [SerializeField] private SpriteRenderer targetRenderer;
+    [SerializeField] private Renderer targetRenderer;
+    [SerializeField] private Color targetColor = Color.white;
     [SerializeField] private Color waitingColor = Color.black;
 
     public bool IsTouchingPlaneHitFollower { get; private set; }
@@ -21,7 +26,11 @@ public class Audience : MonoBehaviour
     private float interpolationTime;
     private float timeAfterExit;
     private bool isReturning;
-    private Color initialColor;
+    private bool isWaitingToReturn;
+    private float noiseSeed;
+    private Color interpolationStartColor;
+    private Color targetInterpolationColor;
+    private Material targetMaterial;
 
     private void Start()
     {
@@ -30,13 +39,19 @@ public class Audience : MonoBehaviour
 
         if (targetRenderer == null)
         {
-            targetRenderer = GetComponentInChildren<SpriteRenderer>();
+            targetRenderer = GetComponentInChildren<Renderer>();
         }
 
         if (targetRenderer != null)
         {
-            initialColor = targetRenderer.color;
+            targetMaterial = targetRenderer.material;
+            targetMaterial.color = waitingColor;
         }
+
+        interpolationStartColor = waitingColor;
+        targetInterpolationColor = waitingColor;
+        interpolationTime = moveDuration;
+        noiseSeed = Random.value * 1000f;
     }
 
     private void Update()
@@ -44,14 +59,33 @@ public class Audience : MonoBehaviour
         if (IsTouchingPlaneHitFollower)
         {
             MoveToTarget();
+            ApplyDanceNoise();
             return;
         }
 
-        timeAfterExit += Time.deltaTime;
-
-        if (timeAfterExit >= returnDelay)
+        if (isWaitingToReturn)
         {
-            StartReturningIfNeeded();
+            timeAfterExit += Time.deltaTime;
+            MoveToTarget();
+
+            bool hasReachedOffset = moveDuration <= 0f || interpolationTime >= moveDuration;
+
+            if (timeAfterExit >= returnDelay && hasReachedOffset)
+            {
+                StartReturningIfNeeded();
+                return;
+            }
+
+            if (timeAfterExit < returnDelay)
+            {
+                ApplyDanceNoise();
+            }
+
+            return;
+        }
+
+        if (isReturning)
+        {
             MoveToTarget();
         }
     }
@@ -85,9 +119,9 @@ public class Audience : MonoBehaviour
 
         IsTouchingPlaneHitFollower = true;
         isReturning = false;
+        isWaitingToReturn = false;
         timeAfterExit = 0f;
-        SetWaitingColor(false);
-        BeginInterpolation(initialPosition + hitOffset);
+        BeginInterpolation(initialPosition + hitOffset, targetColor);
     }
 
     private void HandleExit(Collider other)
@@ -99,8 +133,8 @@ public class Audience : MonoBehaviour
 
         IsTouchingPlaneHitFollower = false;
         isReturning = false;
+        isWaitingToReturn = true;
         timeAfterExit = 0f;
-        SetWaitingColor(true);
     }
 
     private void StartReturningIfNeeded()
@@ -111,24 +145,29 @@ public class Audience : MonoBehaviour
         }
 
         isReturning = true;
-        SetWaitingColor(false);
-        BeginInterpolation(initialPosition);
+        isWaitingToReturn = false;
+        BeginInterpolation(initialPosition, waitingColor);
     }
 
-    private void SetWaitingColor(bool isWaiting)
+    private void ApplyDanceNoise()
     {
-        if (targetRenderer == null)
-        {
-            return;
-        }
+        float noise = Mathf.PerlinNoise(
+            noiseSeed,
+            Time.time * danceFrequency
+        );
 
-        targetRenderer.color = isWaiting ? waitingColor : initialColor;
+        float verticalOffset = (noise * 2f - 1f) * danceAmplitude;
+        transform.position += Vector3.up * verticalOffset;
     }
 
-    private void BeginInterpolation(Vector3 newTargetPosition)
+    private void BeginInterpolation(Vector3 newTargetPosition, Color newTargetColor)
     {
         interpolationStartPosition = transform.position;
         targetPosition = newTargetPosition;
+        interpolationStartColor = targetMaterial != null
+            ? targetMaterial.color
+            : waitingColor;
+        targetInterpolationColor = newTargetColor;
         interpolationTime = 0f;
     }
 
@@ -137,6 +176,12 @@ public class Audience : MonoBehaviour
         if (moveDuration <= 0f)
         {
             transform.position = targetPosition;
+
+            if (targetMaterial != null)
+            {
+                targetMaterial.color = targetInterpolationColor;
+            }
+
             return;
         }
 
@@ -149,5 +194,15 @@ public class Audience : MonoBehaviour
             rate,
             interpolationType
         );
+
+        if (targetMaterial != null)
+        {
+            targetMaterial.color = InterpolationUtility.Interpolate(
+                interpolationStartColor,
+                targetInterpolationColor,
+                rate,
+                interpolationType
+            );
+        }
     }
 }

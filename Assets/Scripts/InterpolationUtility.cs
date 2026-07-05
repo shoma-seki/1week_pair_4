@@ -20,6 +20,16 @@ public static class InterpolationUtility
         return Vector3.Lerp(start, end, rate);
     }
 
+    public static Color Interpolate(
+        Color start,
+        Color end,
+        float time,
+        InterpolationType interpolationType)
+    {
+        float rate = Evaluate(Mathf.Clamp01(time), interpolationType);
+        return Color.Lerp(start, end, rate);
+    }
+
     private static float Evaluate(float time, InterpolationType interpolationType)
     {
         switch (interpolationType)

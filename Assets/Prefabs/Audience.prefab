@@ -51,8 +51,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Audience
   hitOffset: {x: 0, y: 3, z: 0}
   moveDuration: 0.3
-  returnDelay: 1
+  returnDelay: 3
   interpolationType: 2
+  danceAmplitude: 0.5
+  danceFrequency: 8
+  targetRenderer: {fileID: 0}
+  targetColor: {r: 1, g: 1, b: 1, a: 1}
+  waitingColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!33 &5348483964508078332
 MeshFilter:
   m_ObjectHideFlags: 0
