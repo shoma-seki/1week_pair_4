@@ -9,6 +9,10 @@ public class Audience : MonoBehaviour
     [SerializeField] private float returnDelay = 1f;
     [SerializeField] private InterpolationType interpolationType = InterpolationType.Linear;
 
+    [Header("Visual")]
+    [SerializeField] private SpriteRenderer targetRenderer;
+    [SerializeField] private Color waitingColor = Color.black;
+
     public bool IsTouchingPlaneHitFollower { get; private set; }
 
     private Vector3 initialPosition;
@@ -17,11 +21,22 @@ public class Audience : MonoBehaviour
     private float interpolationTime;
     private float timeAfterExit;
     private bool isReturning;
+    private Color initialColor;
 
     private void Start()
     {
         initialPosition = transform.position;
         targetPosition = initialPosition;
+
+        if (targetRenderer == null)
+        {
+            targetRenderer = GetComponentInChildren<SpriteRenderer>();
+        }
+
+        if (targetRenderer != null)
+        {
+            initialColor = targetRenderer.color;
+        }
     }
 
     private void Update()
@@ -63,7 +78,7 @@ public class Audience : MonoBehaviour
 
     private void HandleEnter(Collider other)
     {
-        if (other.GetComponentInParent<PlaneHitFollower>() == null)
+        if (!other.CompareTag("Shoben"))
         {
             return;
         }
@@ -71,12 +86,13 @@ public class Audience : MonoBehaviour
         IsTouchingPlaneHitFollower = true;
         isReturning = false;
         timeAfterExit = 0f;
+        SetWaitingColor(false);
         BeginInterpolation(initialPosition + hitOffset);
     }
 
     private void HandleExit(Collider other)
     {
-        if (other.GetComponentInParent<PlaneHitFollower>() == null)
+        if (!other.CompareTag("Shoben"))
         {
             return;
         }
@@ -84,6 +100,7 @@ public class Audience : MonoBehaviour
         IsTouchingPlaneHitFollower = false;
         isReturning = false;
         timeAfterExit = 0f;
+        SetWaitingColor(true);
     }
 
     private void StartReturningIfNeeded()
@@ -94,7 +111,18 @@ public class Audience : MonoBehaviour
         }
 
         isReturning = true;
+        SetWaitingColor(false);
         BeginInterpolation(initialPosition);
+    }
+
+    private void SetWaitingColor(bool isWaiting)
+    {
+        if (targetRenderer == null)
+        {
+            return;
+        }
+
+        targetRenderer.color = isWaiting ? waitingColor : initialColor;
     }
 
     private void BeginInterpolation(Vector3 newTargetPosition)
