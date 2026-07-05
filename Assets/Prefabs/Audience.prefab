@@ -57,7 +57,7 @@ MonoBehaviour:
   danceFrequency: 8
   targetRenderer: {fileID: 0}
   targetColor: {r: 1, g: 1, b: 1, a: 1}
-  waitingColor: {r: 0, g: 0, b: 0, a: 1}
+  waitingColor: {r: 0.3773585, g: 0.3773585, b: 0.3773585, a: 1}
 --- !u!33 &5348483964508078332
 MeshFilter:
   m_ObjectHideFlags: 0

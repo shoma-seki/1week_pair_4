@@ -56,6 +56,11 @@ public class Audience : MonoBehaviour
 
     private void Update()
     {
+        if (IsTouchingPlaneHitFollower && !Input.GetMouseButton(0))
+        {
+            BeginReturnWait();
+        }
+
         if (IsTouchingPlaneHitFollower)
         {
             MoveToTarget();
@@ -127,6 +132,16 @@ public class Audience : MonoBehaviour
     private void HandleExit(Collider other)
     {
         if (!other.CompareTag("Shoben"))
+        {
+            return;
+        }
+
+        BeginReturnWait();
+    }
+
+    private void BeginReturnWait()
+    {
+        if (!IsTouchingPlaneHitFollower)
         {
             return;
         }

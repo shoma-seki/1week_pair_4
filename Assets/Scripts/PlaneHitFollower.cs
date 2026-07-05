@@ -22,6 +22,7 @@ public class PlaneHitFollower : MonoBehaviour
     {
         capsuleCollider = GetComponent<CapsuleCollider>();
         initialRadius = capsuleCollider.radius;
+        capsuleCollider.enabled = false;
 
         if (cameraRaycaster == null)
         {
@@ -52,6 +53,7 @@ public class PlaneHitFollower : MonoBehaviour
     {
         if (Input.GetMouseButton(0))
         {
+            capsuleCollider.enabled = true;
             clickDuration += Time.deltaTime;
 
             if (clickDuration >= thirdStageTime)
@@ -72,5 +74,6 @@ public class PlaneHitFollower : MonoBehaviour
 
         clickDuration = 0f;
         capsuleCollider.radius = initialRadius;
+        capsuleCollider.enabled = false;
     }
 }
