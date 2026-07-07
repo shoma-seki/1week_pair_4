@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 2049817973853200017}
   - component: {fileID: 1466152602858186710}
   - component: {fileID: 3377934550982711814}
+  - component: {fileID: 1146937808978332402}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -102,6 +103,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99964693a36fc674c8a267e67a350432, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
+  maxUrine: 100
+  urineConsumptionPerSecond: 20
   distancePerBeat: 5
   moveDurationInBeats: 0.5
   requireMouseButton: 1
+  stretchAmount: 0.12
+  squashAmount: 0.18
+--- !u!114 &1146937808978332402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6049106935897673415}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47c7f32cd7be4e46818c9d6373fb98b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBallisticLauncher
+  cameraRaycaster: {fileID: 0}
+  launchPoint: {fileID: 7260140667895434535}
+  arcHeight: 3
+  launchOffset: {x: 0, y: 0, z: 0}
+  streamRenderer: {fileID: 0}
+  streamSegments: 32
+  streamDuration: 0.45
+  streamWidth: 0.09
+  wobbleAmplitude: 0.035
+  wobbleFrequency: 5
+  wobbleSpeed: 7
+  streamColor: {r: 1, g: 0.82, b: 0.12, a: 0.9}
+  launchOnMouseButtonUp: 1
+  mouseButton: 0
