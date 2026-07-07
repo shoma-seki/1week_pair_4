@@ -3,6 +3,10 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class Audience : MonoBehaviour
 {
+    [Header("Fan")]
+    [SerializeField, Min(0f)] private float fanPointPerSecond = 1f;
+    [SerializeField, Min(0.01f)] private float fanPointToBecomeFan = 3f;
+
     [Header("Movement")]
     [SerializeField] private Vector3 hitOffset;
     [SerializeField] private float moveDuration = 0.3f;
@@ -21,6 +25,8 @@ public class Audience : MonoBehaviour
     [SerializeField] private Color waitingColor = Color.black;
 
     public bool IsTouchingPlaneHitFollower { get; private set; }
+    public float FanPoint { get; private set; }
+    public bool IsFan { get; private set; }
 
     private Vector3 initialPosition;
     private Vector3 interpolationStartPosition;
@@ -50,6 +56,10 @@ public class Audience : MonoBehaviour
         {
             targetMaterial = targetRenderer.material;
             targetMaterial.color = spawnColorDuration > 0f ? spawnColor : waitingColor;
+            targetMaterial.SetColor("_FanColor", targetColor);
+            targetMaterial.SetFloat("_FanFill", 0f);
+            targetMaterial.SetFloat("_BoundsMinY", targetRenderer.localBounds.min.y);
+            targetMaterial.SetFloat("_BoundsMaxY", targetRenderer.localBounds.max.y);
             isSpawnColorTransitioning = spawnColorDuration > 0f;
         }
 
@@ -62,6 +72,11 @@ public class Audience : MonoBehaviour
     private void Update()
     {
         UpdateSpawnColor();
+
+        if (IsTouchingPlaneHitFollower)
+        {
+            IncreaseFanPoint();
+        }
 
         if (IsTouchingPlaneHitFollower && !Input.GetMouseButton(0))
         {
@@ -100,6 +115,32 @@ public class Audience : MonoBehaviour
         {
             MoveToTarget();
         }
+    }
+
+    private void IncreaseFanPoint()
+    {
+        if (IsFan)
+        {
+            return;
+        }
+
+        FanPoint = Mathf.Min(
+            FanPoint + fanPointPerSecond * Time.deltaTime,
+            fanPointToBecomeFan
+        );
+
+        if (targetMaterial != null)
+        {
+            targetMaterial.SetFloat("_FanFill", FanPoint / fanPointToBecomeFan);
+        }
+
+        if (FanPoint < fanPointToBecomeFan)
+        {
+            return;
+        }
+
+        IsFan = true;
+        FanManager.Instance.AddFan();
     }
 
     private void UpdateSpawnColor()
@@ -151,7 +192,7 @@ public class Audience : MonoBehaviour
         isReturning = false;
         isWaitingToReturn = false;
         timeAfterExit = 0f;
-        BeginInterpolation(initialPosition + hitOffset, targetColor);
+        BeginInterpolation(initialPosition + hitOffset, waitingColor);
     }
 
     private void HandleExit(Collider other)
@@ -244,5 +285,11 @@ public class Audience : MonoBehaviour
                 interpolationType
             );
         }
+    }
+
+    private void OnValidate()
+    {
+        fanPointPerSecond = Mathf.Max(0f, fanPointPerSecond);
+        fanPointToBecomeFan = Mathf.Max(0.01f, fanPointToBecomeFan);
     }
 }

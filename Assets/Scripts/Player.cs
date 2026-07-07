@@ -34,6 +34,7 @@ public class Player : MonoBehaviour
     public bool CanUrinate => currentUrine > 0f;
     public float DistanceTraveled => distanceTraveled;
     public bool CanMove => canMove;
+    public bool IsMoving => isMoving;
 
     public event Action<float, float> UrineChanged;
     public event Action<float> DistanceChanged;
