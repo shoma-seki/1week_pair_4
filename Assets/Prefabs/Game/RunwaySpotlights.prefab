@@ -45,8 +45,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunwaySpotlights
   spotlights: []
-  startDelay: 0
+  resultCamera: {fileID: 0}
+  activationOffset: 0
   interval: 0.25
   playOnStart: 1
-  loop: 0
   turnOffBeforePlay: 1
