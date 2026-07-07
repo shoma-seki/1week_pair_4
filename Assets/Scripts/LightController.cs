@@ -1,79 +1,104 @@
 using System.Collections;
 using UnityEngine;
 
-
 public class LightController : MonoBehaviour
 {
-    [Header("“d‹CŠÖŒW")]
-    [SerializeField] private float fallSpeed = 5.0f;
-    [SerializeField] private float groundY = 0.0f;
-    private bool isFalling = false;
-    private bool isShaking = false;
-    [SerializeField] private float shakeTime = 2f;
-    [SerializeField] private float shakeAmount = 0.1f;
+    [Header("Fall")]
+    [SerializeField, Min(0.01f)] private float fallSpeed = 5f;
+    [SerializeField] private float groundY;
+    [SerializeField, Min(0f)] private float delayBeforeShake = 3f;
+    [SerializeField, Min(0f)] private float shakeTime = 2f;
+    [SerializeField, Min(0f)] private float shakeAmount = 0.1f;
 
-
-    [Header("‰ÎŠÖ˜A")]
+    [Header("Fire")]
     [SerializeField] private FireCOntorol firePrefab;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [SerializeField] private Vector3 fireSpawnOffset = new Vector3(0f, 0.5f, 0f);
+
+    public bool IsFalling { get; private set; }
+
+    private bool isShaking;
+    private bool hasLanded;
+
+    private void Start()
     {
-        
+        StartCoroutine(FallSequence());
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        //‰¼
-        if (Input.GetKeyDown(KeyCode.Space) && !isFalling && !isShaking)
+        if (!IsFalling || hasLanded)
         {
-            //isFalling = true;
-
-            StartCoroutine(ShakeThenFall());
-        }
-        
-        //—Ž‰º
-        if (isFalling)
-        {
-            transform.position += Vector3.down * fallSpeed * Time.deltaTime;
-
-            if (transform.position.y <= groundY)
-            {
-                SpawnFire();
-            }
+            return;
         }
 
+        transform.position += Vector3.down * fallSpeed * Time.deltaTime;
+
+        if (transform.position.y <= groundY)
+        {
+            Land();
+        }
     }
 
-    void SpawnFire()
+    /// <summary>
+    /// Starts the light's shake-and-fall sequence. Repeated calls are ignored.
+    /// </summary>
+    public void BeginFall()
     {
-        Vector3 spawnPosition = transform.position;
-        spawnPosition.y += 0.5f;  
+        if (IsFalling || isShaking || hasLanded)
+        {
+            return;
+        }
 
-        Instantiate(firePrefab, spawnPosition, Quaternion.identity);
-        Destroy(gameObject);
+        StartCoroutine(FallSequence());
     }
 
-    private IEnumerator ShakeThenFall()
+    private IEnumerator FallSequence()
     {
         isShaking = true;
+        yield return new WaitForSeconds(delayBeforeShake);
 
-        Vector3 startPos = transform.position;
-        float timer = 0f;
+        Vector3 startPosition = transform.position;
+        float elapsed = 0f;
 
-        while (timer < shakeTime)
+        while (elapsed < shakeTime)
         {
-            timer += Time.deltaTime;
-
-            float x = Mathf.Sin(timer * 20f) * shakeAmount;
-            transform.position = startPos + new Vector3(x, 0, 0);
-
+            elapsed += Time.deltaTime;
+            float horizontalOffset = Mathf.Sin(elapsed * 20f) * shakeAmount;
+            transform.position = startPosition + Vector3.right * horizontalOffset;
             yield return null;
         }
 
-        transform.position = startPos;
-
+        transform.position = startPosition;
         isShaking = false;
-        isFalling = true;
+        IsFalling = true;
+    }
+
+    private void Land()
+    {
+        hasLanded = true;
+        IsFalling = false;
+
+        Vector3 landingPosition = transform.position;
+        landingPosition.y = groundY;
+        transform.position = landingPosition;
+
+        if (firePrefab != null)
+        {
+            Instantiate(firePrefab, landingPosition + fireSpawnOffset, Quaternion.identity);
+        }
+        else
+        {
+            Debug.LogWarning("LightController: Fire Prefab is not assigned.", this);
+        }
+
+        Destroy(gameObject);
+    }
+
+    private void OnValidate()
+    {
+        fallSpeed = Mathf.Max(0.01f, fallSpeed);
+        delayBeforeShake = Mathf.Max(0f, delayBeforeShake);
+        shakeTime = Mathf.Max(0f, shakeTime);
+        shakeAmount = Mathf.Max(0f, shakeAmount);
     }
 }

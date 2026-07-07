@@ -128,11 +128,15 @@ MonoBehaviour:
   launchOffset: {x: 0, y: 0, z: 0}
   streamRenderer: {fileID: 0}
   streamSegments: 32
-  streamDuration: 0.45
   streamWidth: 0.09
   wobbleAmplitude: 0.035
   wobbleFrequency: 5
   wobbleSpeed: 7
   streamColor: {r: 1, g: 0.82, b: 0.12, a: 0.9}
-  launchOnMouseButtonUp: 1
+  secondStageTime: 0.5
+  thirdStageTime: 1.5
+  firstStageMultiplier: 1.25
+  secondStageMultiplier: 1.5
+  thirdStageMultiplier: 2
+  thirdStagePrefab: {fileID: 0}
   mouseButton: 0

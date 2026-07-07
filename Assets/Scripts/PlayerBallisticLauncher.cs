@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -20,19 +19,28 @@ public class PlayerBallisticLauncher : MonoBehaviour
     [Tooltip("未設定の場合は実行時に自動生成します。")]
     [SerializeField] private LineRenderer streamRenderer;
     [SerializeField, Min(2)] private int streamSegments = 32;
-    [SerializeField, Min(0.01f)] private float streamDuration = 0.45f;
     [SerializeField, Min(0f)] private float streamWidth = 0.09f;
     [SerializeField, Min(0f)] private float wobbleAmplitude = 0.035f;
     [SerializeField, Min(0f)] private float wobbleFrequency = 5f;
     [SerializeField, Min(0f)] private float wobbleSpeed = 7f;
     [SerializeField] private Color streamColor = new Color(1f, 0.82f, 0.12f, 0.9f);
 
+    [Header("Charge Stages")]
+    [SerializeField, Min(0f)] private float secondStageTime = 0.5f;
+    [SerializeField, Min(0f)] private float thirdStageTime = 1.5f;
+    [SerializeField, Min(0f)] private float firstStageMultiplier = 1.25f;
+    [SerializeField, Min(0f)] private float secondStageMultiplier = 1.5f;
+    [SerializeField, Min(0f)] private float thirdStageMultiplier = 2f;
+    [Tooltip("三段階目の間だけ再生するプレハブ。LineRenderer があれば放物線として更新します。")]
+    [SerializeField] private GameObject thirdStagePrefab;
+
     [Header("Input")]
-    [SerializeField] private bool launchOnMouseButtonUp = true;
     [SerializeField, Min(0)] private int mouseButton;
 
-    private Coroutine streamCoroutine;
     private Material generatedStreamMaterial;
+    private float holdDuration;
+    private GameObject thirdStageInstance;
+    private LineRenderer thirdStageRenderer;
 
     private void Awake()
     {
@@ -46,9 +54,14 @@ public class PlayerBallisticLauncher : MonoBehaviour
 
     private void Update()
     {
-        if (launchOnMouseButtonUp && Input.GetMouseButtonUp(mouseButton))
+        if (Input.GetMouseButton(mouseButton))
         {
-            LaunchAtPlaneHit();
+            holdDuration += Time.deltaTime;
+            DrawHeldStream();
+        }
+        else
+        {
+            ResetStream();
         }
     }
 
@@ -58,6 +71,9 @@ public class PlayerBallisticLauncher : MonoBehaviour
         {
             streamRenderer.enabled = false;
         }
+
+        SetThirdStageActive(false);
+        holdDuration = 0f;
     }
 
     private void OnDestroy()
@@ -65,6 +81,11 @@ public class PlayerBallisticLauncher : MonoBehaviour
         if (generatedStreamMaterial != null)
         {
             Destroy(generatedStreamMaterial);
+        }
+
+        if (thirdStageInstance != null)
+        {
+            Destroy(thirdStageInstance);
         }
     }
 
@@ -95,7 +116,7 @@ public class PlayerBallisticLauncher : MonoBehaviour
             Physics.gravity.y);
 
         float flightTime = CalculateFlightTime(startPosition, targetPosition, arcHeight, Physics.gravity.y);
-        PlayStream(startPosition, launchVelocity, flightTime);
+        DrawStream(streamRenderer, startPosition, launchVelocity, flightTime, Time.time, GetStageMultiplier());
         return true;
     }
 
@@ -139,48 +160,57 @@ public class PlayerBallisticLauncher : MonoBehaviour
         streamRenderer.enabled = false;
     }
 
-    private void PlayStream(Vector3 startPosition, Vector3 launchVelocity, float flightTime)
+    private void DrawHeldStream()
     {
-        if (streamRenderer == null)
+        if (cameraRaycaster == null ||
+            !cameraRaycaster.TryGetPlaneHitPoint(out Vector3 targetPosition))
+        {
+            HideRenderers();
+            return;
+        }
+
+        float multiplier = GetStageMultiplier();
+        bool isThirdStage = holdDuration >= thirdStageTime && thirdStagePrefab != null;
+        LineRenderer activeRenderer = streamRenderer;
+
+        if (isThirdStage)
+        {
+            EnsureThirdStageInstance();
+            SetThirdStageActive(true);
+            activeRenderer = thirdStageRenderer;
+            streamRenderer.enabled = false;
+        }
+        else
+        {
+            SetThirdStageActive(false);
+        }
+
+        if (activeRenderer == null)
         {
             return;
         }
 
-        if (streamCoroutine != null)
-        {
-            StopCoroutine(streamCoroutine);
-        }
-
-        streamCoroutine = StartCoroutine(StreamRoutine(startPosition, launchVelocity, flightTime));
-    }
-
-    private IEnumerator StreamRoutine(Vector3 startPosition, Vector3 launchVelocity, float flightTime)
-    {
-        streamRenderer.enabled = true;
-        streamRenderer.positionCount = Mathf.Max(2, streamSegments);
-        streamRenderer.widthMultiplier = streamWidth;
-        streamRenderer.startColor = streamColor;
-        streamRenderer.endColor = new Color(streamColor.r, streamColor.g, streamColor.b, 0.35f);
-
-        float elapsed = 0f;
-        while (elapsed < streamDuration)
-        {
-            DrawStream(startPosition, launchVelocity, flightTime, elapsed);
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        streamRenderer.enabled = false;
-        streamCoroutine = null;
+        Vector3 startPosition = GetLaunchPosition();
+        Vector3 launchVelocity = CalculateLaunchVelocity(startPosition, targetPosition, arcHeight, Physics.gravity.y);
+        float flightTime = CalculateFlightTime(startPosition, targetPosition, arcHeight, Physics.gravity.y);
+        DrawStream(activeRenderer, startPosition, launchVelocity, flightTime, Time.time, multiplier);
     }
 
     private void DrawStream(
+        LineRenderer renderer,
         Vector3 startPosition,
         Vector3 launchVelocity,
         float flightTime,
-        float animationTime)
+        float animationTime,
+        float strengthMultiplier)
     {
-        int count = streamRenderer.positionCount;
+        renderer.enabled = true;
+        renderer.positionCount = Mathf.Max(2, streamSegments);
+        renderer.widthMultiplier = streamWidth * strengthMultiplier;
+        renderer.startColor = streamColor;
+        renderer.endColor = new Color(streamColor.r, streamColor.g, streamColor.b, 0.35f);
+
+        int count = renderer.positionCount;
         Vector3 horizontalDirection = new Vector3(launchVelocity.x, 0f, launchVelocity.z).normalized;
         Vector3 sideways = Vector3.Cross(Vector3.up, horizontalDirection);
         if (sideways.sqrMagnitude < 0.001f)
@@ -202,8 +232,45 @@ public class PlayerBallisticLauncher : MonoBehaviour
                 normalizedTime * wobbleFrequency,
                 animationTime * wobbleSpeed) - 0.5f;
             position += sideways * noise * 2f * wobbleAmplitude * endpointMask;
-            streamRenderer.SetPosition(i, position);
+            renderer.SetPosition(i, position);
         }
+    }
+
+    private float GetStageMultiplier()
+    {
+        if (holdDuration >= thirdStageTime) return thirdStageMultiplier;
+        if (holdDuration >= secondStageTime) return secondStageMultiplier;
+        return firstStageMultiplier;
+    }
+
+    private void EnsureThirdStageInstance()
+    {
+        if (thirdStageInstance != null) return;
+
+        thirdStageInstance = Instantiate(thirdStagePrefab, GetLaunchPosition(), transform.rotation, transform);
+        thirdStageRenderer = thirdStageInstance.GetComponentInChildren<LineRenderer>(true);
+    }
+
+    private void SetThirdStageActive(bool active)
+    {
+        if (thirdStageInstance != null && thirdStageInstance.activeSelf != active)
+        {
+            thirdStageInstance.SetActive(active);
+        }
+    }
+
+    private void HideRenderers()
+    {
+        if (streamRenderer != null) streamRenderer.enabled = false;
+        SetThirdStageActive(false);
+    }
+
+    private void ResetStream()
+    {
+        if (holdDuration <= 0f) return;
+
+        holdDuration = 0f;
+        HideRenderers();
     }
 
     public static Vector3 CalculateLaunchVelocity(
