@@ -19,8 +19,7 @@ public class ObstacleTrigger : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            //Debug.Log("‚ ‚½‚½");
-            obstacle.StartMove(other.transform);
+            obstacle.StartMove();
         }
     }
 }
