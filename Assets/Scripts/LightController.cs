@@ -37,9 +37,10 @@ public class LightController : MonoBehaviour
     void SpawnFire()
     {
         Vector3 spawnPosition = transform.position;
-        spawnPosition.y += 0.5f;
+        spawnPosition.y += 4.5f;
 
-        Instantiate(firePrefab, spawnPosition, Quaternion.identity);
+        Quaternion rotation = Quaternion.Euler(90f, 0f, 180f);
+        Instantiate(firePrefab, spawnPosition, rotation);
         Destroy(gameObject);
     }
 

@@ -30,6 +30,11 @@ public class Audience : MonoBehaviour
     [SerializeField] private Color targetColor = Color.white;
     [SerializeField] private Color waitingColor = Color.black;
 
+    [Header("Fire")]
+    [SerializeField, Min(0f)] private float fanPointDecreasePerSecond = 1f;
+    private bool isTouchingFire;
+    [SerializeField] private float fireDecreasePerSecond = 1f;
+
     public bool IsTouchingPlaneHitFollower { get; private set; }
     public float FanPoint { get; private set; }
     public bool IsFan { get; private set; }
@@ -105,6 +110,11 @@ public class Audience : MonoBehaviour
         {
             MoveToTarget();
         }
+
+        if (isTouchingFire)
+        {
+            DecreaseFanPoint();
+        }
     }
 
     private void IncreaseFanPoint()
@@ -133,6 +143,34 @@ public class Audience : MonoBehaviour
         IsFan = true;
         FanManager.Instance.AddFan();
         MoveToFanOffset();
+    }
+
+    public void DecreaseFanPoint()
+    {
+        if (IsFan)
+        {
+            return;
+        }
+
+        FanPoint = Mathf.Max(
+            FanPoint - fanPointDecreasePerSecond * Time.deltaTime,
+            0f
+        );
+
+        Debug.Log("FanPoint : " + FanPoint);
+
+        if (targetMaterial != null)
+        {
+            targetMaterial.SetFloat(
+                FanFillId,
+                FanPoint / fanPointToBecomeFan
+            );
+        }
+
+        float fill = FanPoint / fanPointToBecomeFan;
+        Debug.Log("Fill : " + fill);
+
+        targetMaterial.SetFloat(FanFillId, fill);
     }
 
     private void UpdateSpawnColor()
@@ -174,6 +212,12 @@ public class Audience : MonoBehaviour
 
     private void HandleEnter(Collider other)
     {
+        if (other.CompareTag("Fire"))
+        {
+            isTouchingFire = true;
+            return;
+        }
+
         if (!other.CompareTag("Shoben"))
         {
             return;
@@ -184,6 +228,12 @@ public class Audience : MonoBehaviour
 
     private void HandleExit(Collider other)
     {
+        if (other.CompareTag("Fire"))
+        {
+            isTouchingFire = false;
+            return;
+        }
+
         if (!other.CompareTag("Shoben"))
         {
             return;
