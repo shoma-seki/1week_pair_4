@@ -7,8 +7,10 @@ public class CameraFollow : MonoBehaviour
     [Header("Stop Camera Effect")]
     [SerializeField, Range(0f, 1f)] private float zoomInAmount = 0.2f;
     [SerializeField, Min(0.01f)] private float zoomInDuration = 0.15f;
+    [SerializeField] private InterpolationType zoomInInterpolationType = InterpolationType.SmoothStep;
     [SerializeField, Min(0f)] private float holdDuration = 0.12f;
     [SerializeField, Min(0.01f)] private float returnDuration = 1.2f;
+    [SerializeField] private InterpolationType returnInterpolationType = InterpolationType.SmoothStep;
 
     private Vector3 offset;
     private bool isPlayingStopEffect;
@@ -64,7 +66,12 @@ public class CameraFollow : MonoBehaviour
         if (effectElapsed < zoomInDuration)
         {
             float progress = effectElapsed / zoomInDuration;
-            return Mathf.SmoothStep(0f, zoomInAmount, progress);
+            return InterpolationUtility.Interpolate(
+                0f,
+                zoomInAmount,
+                progress,
+                zoomInInterpolationType
+            );
         }
 
         float holdElapsed = effectElapsed - zoomInDuration;
@@ -80,6 +87,11 @@ public class CameraFollow : MonoBehaviour
             return 0f;
         }
 
-        return Mathf.SmoothStep(zoomInAmount, 0f, returnProgress);
+        return InterpolationUtility.Interpolate(
+            zoomInAmount,
+            0f,
+            returnProgress,
+            returnInterpolationType
+        );
     }
 }
