@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,10 +8,10 @@ using UnityEngine.UI;
 public class FanCountText : MonoBehaviour
 {
     // ファン数を表示したい UI の Text コンポーネントを、Inspector でここに設定してください。
-    [SerializeField] private Text fanCountText;
+    [SerializeField] private TextMeshProUGUI fanCountText;
 
     // 数字の前に表示する文字です。数字だけ表示したい場合は空欄にしてください。
-    [SerializeField] private string prefix = "ファン数: ";
+    [SerializeField] private string prefix = "ファン数";
 
     private FanManager fanManager;
 
@@ -33,7 +34,7 @@ public class FanCountText : MonoBehaviour
     {
         if (fanCountText != null)
         {
-            fanCountText.text = prefix + fanCount;
+            fanCountText.text = prefix + fanCount + "人";
         }
     }
 
@@ -41,7 +42,7 @@ public class FanCountText : MonoBehaviour
     {
         if (fanCountText == null)
         {
-            fanCountText = GetComponent<Text>();
+            fanCountText = GetComponent<TextMeshProUGUI>();
         }
     }
 }
