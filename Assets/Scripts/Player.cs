@@ -31,8 +31,10 @@ public class Player : MonoBehaviour
     public float CurrentUrine => currentUrine;
     public float MaxUrine => maxUrine;
     public float UrineNormalized => maxUrine > 0f ? currentUrine / maxUrine : 0f;
+    public bool CanUrinate => currentUrine > 0f;
     public float DistanceTraveled => distanceTraveled;
     public bool CanMove => canMove;
+    public bool IsMoving => isMoving;
 
     public event Action<float, float> UrineChanged;
     public event Action<float> DistanceChanged;

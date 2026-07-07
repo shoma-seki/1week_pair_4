@@ -3,6 +3,10 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class Audience : MonoBehaviour
 {
+    [Header("Fan")]
+    [SerializeField, Min(0f)] private float fanPointPerSecond = 1f;
+    [SerializeField, Min(0.01f)] private float fanPointToBecomeFan = 3f;
+
     [Header("Movement")]
     [SerializeField] private Vector3 hitOffset;
     [SerializeField] private float moveDuration = 0.3f;
@@ -15,10 +19,14 @@ public class Audience : MonoBehaviour
 
     [Header("Visual")]
     [SerializeField] private Renderer targetRenderer;
+    [SerializeField] private Color spawnColor = Color.white;
+    [SerializeField, Min(0f)] private float spawnColorDuration = 1f;
     [SerializeField] private Color targetColor = Color.white;
     [SerializeField] private Color waitingColor = Color.black;
 
     public bool IsTouchingPlaneHitFollower { get; private set; }
+    public float FanPoint { get; private set; }
+    public bool IsFan { get; private set; }
 
     private Vector3 initialPosition;
     private Vector3 interpolationStartPosition;
@@ -31,6 +39,8 @@ public class Audience : MonoBehaviour
     private Color interpolationStartColor;
     private Color targetInterpolationColor;
     private Material targetMaterial;
+    private float spawnColorTime;
+    private bool isSpawnColorTransitioning;
 
     private void Start()
     {
@@ -45,10 +55,15 @@ public class Audience : MonoBehaviour
         if (targetRenderer != null)
         {
             targetMaterial = targetRenderer.material;
-            targetMaterial.color = waitingColor;
+            targetMaterial.color = spawnColorDuration > 0f ? spawnColor : waitingColor;
+            targetMaterial.SetColor("_FanColor", targetColor);
+            targetMaterial.SetFloat("_FanFill", 0f);
+            targetMaterial.SetFloat("_BoundsMinY", targetRenderer.localBounds.min.y);
+            targetMaterial.SetFloat("_BoundsMaxY", targetRenderer.localBounds.max.y);
+            isSpawnColorTransitioning = spawnColorDuration > 0f;
         }
 
-        interpolationStartColor = waitingColor;
+        interpolationStartColor = spawnColor;
         targetInterpolationColor = waitingColor;
         interpolationTime = moveDuration;
         noiseSeed = Random.value * 1000f;
@@ -56,6 +71,13 @@ public class Audience : MonoBehaviour
 
     private void Update()
     {
+        UpdateSpawnColor();
+
+        if (IsTouchingPlaneHitFollower)
+        {
+            IncreaseFanPoint();
+        }
+
         if (IsTouchingPlaneHitFollower && !Input.GetMouseButton(0))
         {
             BeginReturnWait();
@@ -95,6 +117,49 @@ public class Audience : MonoBehaviour
         }
     }
 
+    private void IncreaseFanPoint()
+    {
+        if (IsFan)
+        {
+            return;
+        }
+
+        FanPoint = Mathf.Min(
+            FanPoint + fanPointPerSecond * Time.deltaTime,
+            fanPointToBecomeFan
+        );
+
+        if (targetMaterial != null)
+        {
+            targetMaterial.SetFloat("_FanFill", FanPoint / fanPointToBecomeFan);
+        }
+
+        if (FanPoint < fanPointToBecomeFan)
+        {
+            return;
+        }
+
+        IsFan = true;
+        FanManager.Instance.AddFan();
+    }
+
+    private void UpdateSpawnColor()
+    {
+        if (!isSpawnColorTransitioning || targetMaterial == null)
+        {
+            return;
+        }
+
+        spawnColorTime += Time.deltaTime;
+        float rate = Mathf.Clamp01(spawnColorTime / spawnColorDuration);
+        targetMaterial.color = Color.Lerp(spawnColor, waitingColor, rate);
+
+        if (rate >= 1f)
+        {
+            isSpawnColorTransitioning = false;
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         HandleEnter(other);
@@ -123,10 +188,11 @@ public class Audience : MonoBehaviour
         }
 
         IsTouchingPlaneHitFollower = true;
+        isSpawnColorTransitioning = false;
         isReturning = false;
         isWaitingToReturn = false;
         timeAfterExit = 0f;
-        BeginInterpolation(initialPosition + hitOffset, targetColor);
+        BeginInterpolation(initialPosition + hitOffset, waitingColor);
     }
 
     private void HandleExit(Collider other)
@@ -219,5 +285,11 @@ public class Audience : MonoBehaviour
                 interpolationType
             );
         }
+    }
+
+    private void OnValidate()
+    {
+        fanPointPerSecond = Mathf.Max(0f, fanPointPerSecond);
+        fanPointToBecomeFan = Mathf.Max(0.01f, fanPointToBecomeFan);
     }
 }

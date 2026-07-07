@@ -1,38 +1,28 @@
 using System.Collections;
 using UnityEngine;
 
-
 public class LightController : MonoBehaviour
 {
-    [Header("ìdãCä÷åW")]
+    [Header("ÈõªÊ∞óÈñ¢‰øÇ")]
     [SerializeField] private float fallSpeed = 5.0f;
     [SerializeField] private float groundY = 0.0f;
+    [SerializeField] private float shakeDelay = 3f;
     private bool isFalling = false;
     private bool isShaking = false;
     [SerializeField] private float shakeTime = 2f;
     [SerializeField] private float shakeAmount = 0.1f;
 
-
-    [Header("âŒä÷òA")]
+    [Header("ÁÅ´Èñ¢ÈÄ£")]
     [SerializeField] private FireCOntorol firePrefab;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
     void Start()
     {
-        
+        StartCoroutine(WaitThenShakeAndFall());
     }
 
-    // Update is called once per frame
     void Update()
     {
-        //âº
-        if (Input.GetKeyDown(KeyCode.Space) && !isFalling && !isShaking)
-        {
-            //isFalling = true;
-
-            StartCoroutine(ShakeThenFall());
-        }
-        
-        //óéâ∫
+        // ËêΩ‰∏ã
         if (isFalling)
         {
             transform.position += Vector3.down * fallSpeed * Time.deltaTime;
@@ -42,16 +32,21 @@ public class LightController : MonoBehaviour
                 SpawnFire();
             }
         }
-
     }
 
     void SpawnFire()
     {
         Vector3 spawnPosition = transform.position;
-        spawnPosition.y += 0.5f;  
+        spawnPosition.y += 0.5f;
 
         Instantiate(firePrefab, spawnPosition, Quaternion.identity);
         Destroy(gameObject);
+    }
+
+    private IEnumerator WaitThenShakeAndFall()
+    {
+        yield return new WaitForSeconds(shakeDelay);
+        yield return ShakeThenFall();
     }
 
     private IEnumerator ShakeThenFall()

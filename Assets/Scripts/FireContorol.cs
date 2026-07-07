@@ -1,23 +1,57 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Collider))]
 public class FireCOntorol : MonoBehaviour
 {
-    [SerializeField] private float lifeTime = 5.0f;
-    [SerializeField] private int hp = 3;
+    [SerializeField, Min(0f)] private float lifeTime = 5f;
+    [SerializeField, Min(0.01f)] private float extinguishTime = 2f;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private float urineContactTime;
+
+    private void Start()
     {
-        Destroy(gameObject, lifeTime);
+        if (lifeTime > 0f)
+        {
+            Destroy(gameObject, lifeTime);
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnTriggerStay(Collider other)
     {
-        //‰¼
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (!other.CompareTag("Shoben"))
+        {
+            return;
+        }
+
+        urineContactTime += Time.deltaTime;
+
+        if (urineContactTime >= extinguishTime)
         {
             Destroy(gameObject);
         }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Shoben"))
+        {
+            urineContactTime = 0f;
+        }
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        OnTriggerStay(collision.collider);
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        OnTriggerExit(collision.collider);
+    }
+
+    private void OnValidate()
+    {
+        lifeTime = Mathf.Max(0f, lifeTime);
+        extinguishTime = Mathf.Max(0.01f, extinguishTime);
     }
 }
