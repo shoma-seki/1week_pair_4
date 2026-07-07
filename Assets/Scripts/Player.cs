@@ -28,6 +28,19 @@ public class Player : MonoBehaviour
     [SerializeField, Range(0f, 0.5f)] private float stretchAmount = 0.12f;
     [SerializeField, Range(0f, 0.5f)] private float squashAmount = 0.18f;
 
+    [Header("Player Materials")]
+    [SerializeField] private Renderer playerRenderer;
+    [SerializeField, Tooltip("移動中にビートごとに切り替える2つのマテリアル")]
+    private Material[] movementMaterials = new Material[2];
+    [SerializeField, Tooltip("左クリックを離したときにランダムで表示するマテリアル")]
+    private Material[] stoppedMaterials;
+
+    [Header("Check Collider Spawn")]
+    [SerializeField, Tooltip("CheckColliderタグに触れたときに生成するPrefab")]
+    private GameObject checkColliderSpawnPrefab;
+    [SerializeField, Tooltip("触れたCheckColliderの位置から加算するオフセット")]
+    private Vector3 checkColliderSpawnOffset;
+
     private MusicManager musicManager;
     private Vector3 moveStart;
     private Vector3 moveTarget;
@@ -40,6 +53,7 @@ public class Player : MonoBehaviour
     private float distanceTraveled;
     private bool canMove = true;
     private float urineHoldDuration;
+    private int movementMaterialIndex;
 
     public float CurrentUrine => currentUrine;
     public float MaxUrine => maxUrine;
@@ -73,6 +87,11 @@ public class Player : MonoBehaviour
     private void Awake()
     {
         currentUrine = maxUrine;
+
+        if (playerRenderer == null)
+        {
+            playerRenderer = GetComponentInChildren<Renderer>();
+        }
     }
 
     private void Start()
@@ -103,6 +122,7 @@ public class Player : MonoBehaviour
         UpdateDistanceTraveled();
         UpdateUrineResource();
         UpdateUrineStage();
+        UpdateMaterialState();
 
         if (!isMoving)
         {
@@ -133,6 +153,19 @@ public class Player : MonoBehaviour
         canMove = false;
         isMoving = false;
         transform.localScale = originalScale;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!other.CompareTag("CheckCollider") || checkColliderSpawnPrefab == null)
+        {
+            return;
+        }
+
+        Instantiate(
+            checkColliderSpawnPrefab,
+            other.transform.position + checkColliderSpawnOffset,
+            other.transform.rotation);
     }
 
     private void UpdateDistanceTraveled()
@@ -168,6 +201,52 @@ public class Player : MonoBehaviour
         urineHoldDuration = Input.GetMouseButton(0) && CanUrinate
             ? urineHoldDuration + Time.deltaTime
             : 0f;
+    }
+
+    private void UpdateMaterialState()
+    {
+        if (Input.GetMouseButtonUp(0))
+        {
+            ShowRandomStoppedMaterial();
+        }
+        else if (Input.GetMouseButtonDown(0))
+        {
+            movementMaterialIndex = 0;
+            ShowMovementMaterial();
+        }
+    }
+
+    private void ShowRandomStoppedMaterial()
+    {
+        if (playerRenderer == null || stoppedMaterials == null || stoppedMaterials.Length == 0)
+        {
+            return;
+        }
+
+        int startIndex = UnityEngine.Random.Range(0, stoppedMaterials.Length);
+        for (int offset = 0; offset < stoppedMaterials.Length; offset++)
+        {
+            Material material = stoppedMaterials[(startIndex + offset) % stoppedMaterials.Length];
+            if (material != null)
+            {
+                playerRenderer.sharedMaterial = material;
+                return;
+            }
+        }
+    }
+
+    private void ShowMovementMaterial()
+    {
+        if (playerRenderer == null || movementMaterials == null || movementMaterials.Length < 2)
+        {
+            return;
+        }
+
+        Material material = movementMaterials[movementMaterialIndex];
+        if (material != null)
+        {
+            playerRenderer.sharedMaterial = material;
+        }
     }
 
     public float GetChargeStrengthMultiplier()
@@ -214,6 +293,9 @@ public class Player : MonoBehaviour
         {
             return;
         }
+
+        movementMaterialIndex = 1 - movementMaterialIndex;
+        ShowMovementMaterial();
 
         moveStart = transform.position;
         moveTarget = moveStart + Vector3.forward * distancePerBeat;

@@ -106,11 +106,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Player
   maxUrine: 100
   urineConsumptionPerSecond: 20
+  secondStageTime: 0.5
+  thirdStageTime: 1.5
+  firstStageStrengthMultiplier: 1.25
+  secondStageStrengthMultiplier: 1.5
+  thirdStageStrengthMultiplier: 2
+  secondStageAimSpeedMultiplier: 0.5
+  thirdStageAimSpeedMultiplier: 0.25
+  thirdStageArcHeightMultiplier: 0.35
   distancePerBeat: 5
   moveDurationInBeats: 0.5
   requireMouseButton: 1
   stretchAmount: 0.207
   squashAmount: 0.307
+  playerRenderer: {fileID: 0}
+  movementMaterials:
+  - {fileID: 2100000, guid: 75c51d576bd1aae4085685d808879dc5, type: 2}
+  - {fileID: 2100000, guid: b783743f8d73014489d79c158f130af1, type: 2}
+  stoppedMaterials:
+  - {fileID: 2100000, guid: f00ceb5e16d45d14fa0cf95d62dd0f4f, type: 2}
+  checkColliderSpawnPrefab: {fileID: 0}
+  checkColliderSpawnOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &1146937808978332402
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -128,7 +144,6 @@ MonoBehaviour:
   player: {fileID: 0}
   launchPoint: {fileID: 7260140667895434535}
   arcHeight: 3
-  strongestArcHeightMultiplier: 0.35
   launchOffset: {x: 0, y: 0, z: 0}
   streamRenderer: {fileID: 0}
   streamSegments: 32
@@ -138,11 +153,6 @@ MonoBehaviour:
   wobbleSpeed: 8.62
   disappearDuration: 0.35
   streamColor: {r: 0.6839622, g: 0.9753466, b: 1, a: 0.9}
-  secondStageTime: 0.5
-  thirdStageTime: 1.5
-  firstStageMultiplier: 1.25
-  secondStageMultiplier: 1.5
-  thirdStageMultiplier: 2
   mouseButton: 0
 --- !u!65 &-3730702642770730776
 BoxCollider:
