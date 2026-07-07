@@ -119,6 +119,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!64 &326835927 stripped
+MeshCollider:
+  m_CorrespondingSourceObject: {fileID: 352349713916279811, guid: c31e6199246e4e24bad755f99e8289f3, type: 3}
+  m_PrefabInstance: {fileID: 1480955929}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -207,13 +212,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.18583803, y: 0, z: 0, w: 0.9825804}
+  m_LocalPosition: {x: 0, y: 13.18, z: -19.03}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 21.42, y: 0, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -270,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b80ddf0d311a7ac4297dafd5e62357a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraRaycaster
-  planeCollider: {fileID: 0}
+  planeCollider: {fileID: 326835927}
   maxDistance: 1000
   player: {fileID: 550054920}
 --- !u!114 &330585549
@@ -561,6 +566,10 @@ PrefabInstance:
     - target: {fileID: 4244202346755793538, guid: e92d1477397efd448abf5353cb77b8f5, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7375834388821749855, guid: e92d1477397efd448abf5353cb77b8f5, type: 3}
+      propertyPath: m_Volume
+      value: 0.023
       objectReference: {fileID: 0}
     - target: {fileID: 9189396768244223213, guid: e92d1477397efd448abf5353cb77b8f5, type: 3}
       propertyPath: m_Name
