@@ -4,12 +4,11 @@ public class Obstacle : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 8f;
     [SerializeField] private MeshRenderer meshRenderer;
-    [SerializeField] private float destroyDistance = 20f;
+    [SerializeField] private float lifeTime = 3f;
+    [SerializeField] private Vector3 moveDirection = Vector3.left;　　//飛ぶ向き
 
     private Vector3 startPosition;
     private bool isMoving = false;
-    private Vector3 moveDirection;
-    private bool hasReversed = false;
     private bool isShrinking = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -30,60 +29,52 @@ public class Obstacle : MonoBehaviour
 
         }
 
-        if (isShrinking)
-        {
-            transform.localScale = Vector3.Lerp(
-                transform.localScale,
-                Vector3.zero,
-                Time.deltaTime * 2f);
+        //if (isShrinking)
+        //{
+        //    transform.localScale = Vector3.Lerp(
+        //        transform.localScale,
+        //        Vector3.zero,
+        //        Time.deltaTime * 2f);
 
-            if (transform.localScale.magnitude < 0.05f)
-            {
-                Destroy(gameObject);
-            }
-        }
+        //    if (transform.localScale.magnitude < 0.05f)
+        //    {
+        //        Destroy(gameObject);
+        //    }
+        //}
     }
 
     //当たり判定とプレイヤーがぶつかたら
-    public void StartMove(Transform target)
+    public void StartMove()
     {
+        
         if (isMoving) return;
-
 
         meshRenderer.enabled = true;
 
-        moveDirection = (target.position - transform.position).normalized;
-        Debug.Log(moveDirection);
         isMoving = true;
 
+        Destroy(gameObject, lifeTime);
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
-            Debug.Log("あたた");
+            //
+            //Debug.Log("あたた");
            Destroy(gameObject);
 
         }
 
-        if (!other.CompareTag("Shoben"))
-            return;
-
-        ReverseDirection();
-
-        
     }
 
-   
+    //private void ReverseDirection()
+    //{
+    //    if (hasReversed) return;
 
-    private void ReverseDirection()
-    {
-        if (hasReversed) return;
+    //    hasReversed = true;
+    //    moveDirection = -moveDirection;
 
-        hasReversed = true;
-        moveDirection = -moveDirection;
-
-        isShrinking = true;
-    }
+    //    isShrinking = true;
+    //}
 }
