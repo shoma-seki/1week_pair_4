@@ -108,8 +108,8 @@ MonoBehaviour:
   distancePerBeat: 5
   moveDurationInBeats: 0.5
   requireMouseButton: 1
-  stretchAmount: 0.12
-  squashAmount: 0.18
+  stretchAmount: 0.207
+  squashAmount: 0.307
 --- !u!114 &1146937808978332402
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -123,16 +123,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBallisticLauncher
   cameraRaycaster: {fileID: 0}
+  planeHitFollower: {fileID: 0}
   launchPoint: {fileID: 7260140667895434535}
   arcHeight: 3
   launchOffset: {x: 0, y: 0, z: 0}
   streamRenderer: {fileID: 0}
   streamSegments: 32
-  streamWidth: 0.09
-  wobbleAmplitude: 0.035
-  wobbleFrequency: 5
-  wobbleSpeed: 7
-  streamColor: {r: 1, g: 0.82, b: 0.12, a: 0.9}
+  streamWidth: 0.3
+  wobbleAmplitude: 0.33
+  wobbleFrequency: 5.8
+  wobbleSpeed: 8.62
+  streamColor: {r: 0.6839622, g: 0.9753466, b: 1, a: 0.9}
   secondStageTime: 0.5
   thirdStageTime: 1.5
   firstStageMultiplier: 1.25

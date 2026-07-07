@@ -15,6 +15,8 @@ public class Audience : MonoBehaviour
 
     [Header("Visual")]
     [SerializeField] private Renderer targetRenderer;
+    [SerializeField] private Color spawnColor = Color.white;
+    [SerializeField, Min(0f)] private float spawnColorDuration = 1f;
     [SerializeField] private Color targetColor = Color.white;
     [SerializeField] private Color waitingColor = Color.black;
 
@@ -31,6 +33,8 @@ public class Audience : MonoBehaviour
     private Color interpolationStartColor;
     private Color targetInterpolationColor;
     private Material targetMaterial;
+    private float spawnColorTime;
+    private bool isSpawnColorTransitioning;
 
     private void Start()
     {
@@ -45,10 +49,11 @@ public class Audience : MonoBehaviour
         if (targetRenderer != null)
         {
             targetMaterial = targetRenderer.material;
-            targetMaterial.color = waitingColor;
+            targetMaterial.color = spawnColorDuration > 0f ? spawnColor : waitingColor;
+            isSpawnColorTransitioning = spawnColorDuration > 0f;
         }
 
-        interpolationStartColor = waitingColor;
+        interpolationStartColor = spawnColor;
         targetInterpolationColor = waitingColor;
         interpolationTime = moveDuration;
         noiseSeed = Random.value * 1000f;
@@ -56,6 +61,8 @@ public class Audience : MonoBehaviour
 
     private void Update()
     {
+        UpdateSpawnColor();
+
         if (IsTouchingPlaneHitFollower && !Input.GetMouseButton(0))
         {
             BeginReturnWait();
@@ -95,6 +102,23 @@ public class Audience : MonoBehaviour
         }
     }
 
+    private void UpdateSpawnColor()
+    {
+        if (!isSpawnColorTransitioning || targetMaterial == null)
+        {
+            return;
+        }
+
+        spawnColorTime += Time.deltaTime;
+        float rate = Mathf.Clamp01(spawnColorTime / spawnColorDuration);
+        targetMaterial.color = Color.Lerp(spawnColor, waitingColor, rate);
+
+        if (rate >= 1f)
+        {
+            isSpawnColorTransitioning = false;
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         HandleEnter(other);
@@ -123,6 +147,7 @@ public class Audience : MonoBehaviour
         }
 
         IsTouchingPlaneHitFollower = true;
+        isSpawnColorTransitioning = false;
         isReturning = false;
         isWaitingToReturn = false;
         timeAfterExit = 0f;

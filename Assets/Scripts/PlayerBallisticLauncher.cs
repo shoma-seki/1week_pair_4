@@ -8,11 +8,14 @@ public class PlayerBallisticLauncher : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private CameraRaycaster cameraRaycaster;
+    [SerializeField] private PlaneHitFollower planeHitFollower;
+    [SerializeField] private Player player;
     [SerializeField] private Transform launchPoint;
 
     [Header("Trajectory")]
     [Tooltip("発射点と着地点のうち、高い方から測った放物線の高さ")]
     [SerializeField, Min(0.01f)] private float arcHeight = 3f;
+    [SerializeField, Range(0.05f, 1f)] private float strongestArcHeightMultiplier = 0.35f;
     [SerializeField] private Vector3 launchOffset;
 
     [Header("Urine Stream")]
@@ -23,6 +26,7 @@ public class PlayerBallisticLauncher : MonoBehaviour
     [SerializeField, Min(0f)] private float wobbleAmplitude = 0.035f;
     [SerializeField, Min(0f)] private float wobbleFrequency = 5f;
     [SerializeField, Min(0f)] private float wobbleSpeed = 7f;
+    [SerializeField, Min(0.01f)] private float disappearDuration = 0.35f;
     [SerializeField] private Color streamColor = new Color(1f, 0.82f, 0.12f, 0.9f);
 
     [Header("Charge Stages")]
@@ -32,15 +36,15 @@ public class PlayerBallisticLauncher : MonoBehaviour
     [SerializeField, Min(0f)] private float secondStageMultiplier = 1.5f;
     [SerializeField, Min(0f)] private float thirdStageMultiplier = 2f;
     [Tooltip("三段階目の間だけ再生するプレハブ。LineRenderer があれば放物線として更新します。")]
-    [SerializeField] private GameObject thirdStagePrefab;
 
     [Header("Input")]
     [SerializeField, Min(0)] private int mouseButton;
 
     private Material generatedStreamMaterial;
     private float holdDuration;
-    private GameObject thirdStageInstance;
-    private LineRenderer thirdStageRenderer;
+    private float disappearProgress = 1f;
+    private bool wasFiring;
+    private ParticleSystem[] childParticleSystems;
 
     private void Awake()
     {
@@ -49,19 +53,30 @@ public class PlayerBallisticLauncher : MonoBehaviour
             cameraRaycaster = FindAnyObjectByType<CameraRaycaster>();
         }
 
+        if (planeHitFollower == null)
+        {
+            planeHitFollower = FindAnyObjectByType<PlaneHitFollower>();
+        }
+
+        if (player == null)
+        {
+            player = FindAnyObjectByType<Player>();
+        }
+
         PrepareStreamRenderer();
+        CacheChildParticleSystems();
     }
 
     private void Update()
     {
-        if (Input.GetMouseButton(mouseButton))
+        if (Input.GetMouseButton(mouseButton) && player != null && player.CanUrinate)
         {
             holdDuration += Time.deltaTime;
             DrawHeldStream();
         }
         else
         {
-            ResetStream();
+            StopStream();
         }
     }
 
@@ -72,7 +87,7 @@ public class PlayerBallisticLauncher : MonoBehaviour
             streamRenderer.enabled = false;
         }
 
-        SetThirdStageActive(false);
+        SetChildParticlesPlaying(false);
         holdDuration = 0f;
     }
 
@@ -82,16 +97,12 @@ public class PlayerBallisticLauncher : MonoBehaviour
         {
             Destroy(generatedStreamMaterial);
         }
-
-        if (thirdStageInstance != null)
-        {
-            Destroy(thirdStageInstance);
-        }
     }
 
     public bool LaunchAtPlaneHit()
     {
-        if (cameraRaycaster == null ||
+        if (player == null || !player.CanUrinate ||
+            cameraRaycaster == null ||
             !cameraRaycaster.TryGetPlaneHitPoint(out Vector3 targetPosition))
         {
             return false;
@@ -102,20 +113,28 @@ public class PlayerBallisticLauncher : MonoBehaviour
 
     public bool Launch(Vector3 targetPosition)
     {
+        if (player == null || !player.CanUrinate)
+        {
+            HideRenderers();
+            return false;
+        }
+
         if (Physics.gravity.y >= 0f)
         {
             Debug.LogWarning("Physics.gravity.y は負の値にしてください。", this);
             return false;
         }
 
+        targetPosition = ConstrainTargetPosition(targetPosition);
         Vector3 startPosition = GetLaunchPosition();
+        float stageArcHeight = GetCurrentArcHeight();
         Vector3 launchVelocity = CalculateLaunchVelocity(
             startPosition,
             targetPosition,
-            arcHeight,
+            stageArcHeight,
             Physics.gravity.y);
 
-        float flightTime = CalculateFlightTime(startPosition, targetPosition, arcHeight, Physics.gravity.y);
+        float flightTime = CalculateFlightTime(startPosition, targetPosition, stageArcHeight, Physics.gravity.y);
         DrawStream(streamRenderer, startPosition, launchVelocity, flightTime, Time.time, GetStageMultiplier());
         return true;
     }
@@ -169,31 +188,30 @@ public class PlayerBallisticLauncher : MonoBehaviour
             return;
         }
 
+        targetPosition = ConstrainTargetPosition(targetPosition);
+
         float multiplier = GetStageMultiplier();
-        bool isThirdStage = holdDuration >= thirdStageTime && thirdStagePrefab != null;
-        LineRenderer activeRenderer = streamRenderer;
-
-        if (isThirdStage)
-        {
-            EnsureThirdStageInstance();
-            SetThirdStageActive(true);
-            activeRenderer = thirdStageRenderer;
-            streamRenderer.enabled = false;
-        }
-        else
-        {
-            SetThirdStageActive(false);
-        }
-
-        if (activeRenderer == null)
+        if (streamRenderer == null)
         {
             return;
         }
 
+        wasFiring = true;
+        disappearProgress = 0f;
+        SetChildParticlesPlaying(true);
+
         Vector3 startPosition = GetLaunchPosition();
-        Vector3 launchVelocity = CalculateLaunchVelocity(startPosition, targetPosition, arcHeight, Physics.gravity.y);
-        float flightTime = CalculateFlightTime(startPosition, targetPosition, arcHeight, Physics.gravity.y);
-        DrawStream(activeRenderer, startPosition, launchVelocity, flightTime, Time.time, multiplier);
+        float stageArcHeight = GetCurrentArcHeight();
+        Vector3 launchVelocity = CalculateLaunchVelocity(startPosition, targetPosition, stageArcHeight, Physics.gravity.y);
+        float flightTime = CalculateFlightTime(startPosition, targetPosition, stageArcHeight, Physics.gravity.y);
+        DrawStream(streamRenderer, startPosition, launchVelocity, flightTime, Time.time, multiplier);
+    }
+
+    private Vector3 ConstrainTargetPosition(Vector3 targetPosition)
+    {
+        return planeHitFollower != null
+            ? planeHitFollower.ConstrainTargetPosition(targetPosition)
+            : targetPosition;
     }
 
     private void DrawStream(
@@ -209,6 +227,7 @@ public class PlayerBallisticLauncher : MonoBehaviour
         renderer.widthMultiplier = streamWidth * strengthMultiplier;
         renderer.startColor = streamColor;
         renderer.endColor = new Color(streamColor.r, streamColor.g, streamColor.b, 0.35f);
+        renderer.widthCurve = CreateVisibleWidthCurve(0f);
 
         int count = renderer.positionCount;
         Vector3 horizontalDirection = new Vector3(launchVelocity.x, 0f, launchVelocity.z).normalized;
@@ -231,7 +250,7 @@ public class PlayerBallisticLauncher : MonoBehaviour
             float noise = Mathf.PerlinNoise(
                 normalizedTime * wobbleFrequency,
                 animationTime * wobbleSpeed) - 0.5f;
-            position += sideways * noise * 2f * wobbleAmplitude * endpointMask;
+            position += sideways * noise * 2f * wobbleAmplitude * strengthMultiplier * endpointMask;
             renderer.SetPosition(i, position);
         }
     }
@@ -239,38 +258,94 @@ public class PlayerBallisticLauncher : MonoBehaviour
     private float GetStageMultiplier()
     {
         if (holdDuration >= thirdStageTime) return thirdStageMultiplier;
-        if (holdDuration >= secondStageTime) return secondStageMultiplier;
-        return firstStageMultiplier;
-    }
-
-    private void EnsureThirdStageInstance()
-    {
-        if (thirdStageInstance != null) return;
-
-        thirdStageInstance = Instantiate(thirdStagePrefab, GetLaunchPosition(), transform.rotation, transform);
-        thirdStageRenderer = thirdStageInstance.GetComponentInChildren<LineRenderer>(true);
-    }
-
-    private void SetThirdStageActive(bool active)
-    {
-        if (thirdStageInstance != null && thirdStageInstance.activeSelf != active)
+        if (holdDuration >= secondStageTime)
         {
-            thirdStageInstance.SetActive(active);
+            return Mathf.Lerp(secondStageMultiplier, thirdStageMultiplier,
+                Mathf.InverseLerp(secondStageTime, thirdStageTime, holdDuration));
+        }
+
+        return Mathf.Lerp(firstStageMultiplier, secondStageMultiplier,
+            Mathf.InverseLerp(0f, secondStageTime, holdDuration));
+    }
+
+    private float GetCurrentArcHeight()
+    {
+        float charge = Mathf.InverseLerp(0f, thirdStageTime, holdDuration);
+        return arcHeight * Mathf.Lerp(1f, strongestArcHeightMultiplier, charge);
+    }
+
+    private void CacheChildParticleSystems()
+    {
+        childParticleSystems = GetComponentsInChildren<ParticleSystem>(true);
+        foreach (ParticleSystem particles in childParticleSystems)
+        {
+            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+    }
+
+    private void SetChildParticlesPlaying(bool playing)
+    {
+        if (childParticleSystems == null) return;
+
+        foreach (ParticleSystem particles in childParticleSystems)
+        {
+            if (particles == null) continue;
+
+            if (playing)
+            {
+                if (!particles.isPlaying) particles.Play(true);
+            }
+            else if (particles.isPlaying)
+            {
+                particles.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+            }
         }
     }
 
     private void HideRenderers()
     {
         if (streamRenderer != null) streamRenderer.enabled = false;
-        SetThirdStageActive(false);
+        SetChildParticlesPlaying(false);
     }
 
-    private void ResetStream()
+    private void StopStream()
     {
-        if (holdDuration <= 0f) return;
-
         holdDuration = 0f;
-        HideRenderers();
+        SetChildParticlesPlaying(false);
+
+        if (!wasFiring || streamRenderer == null || !streamRenderer.enabled)
+        {
+            return;
+        }
+
+        disappearProgress += Time.deltaTime / Mathf.Max(0.01f, disappearDuration);
+        if (disappearProgress >= 1f)
+        {
+            wasFiring = false;
+            streamRenderer.enabled = false;
+            return;
+        }
+
+        streamRenderer.widthCurve = CreateVisibleWidthCurve(disappearProgress);
+    }
+
+    private static AnimationCurve CreateVisibleWidthCurve(float hiddenFromStart)
+    {
+        float edge = Mathf.Clamp01(hiddenFromStart);
+        if (edge <= 0f)
+        {
+            return new AnimationCurve(
+                new Keyframe(0f, 1f),
+                new Keyframe(0.8f, 0.8f),
+                new Keyframe(1f, 0.2f));
+        }
+
+        float featherEnd = Mathf.Min(1f, edge + 0.08f);
+        return new AnimationCurve(
+            new Keyframe(0f, 0f),
+            new Keyframe(edge, 0f),
+            new Keyframe(featherEnd, Mathf.Lerp(1f, 0.2f, featherEnd)),
+            new Keyframe(1f, 0.2f));
     }
 
     public static Vector3 CalculateLaunchVelocity(

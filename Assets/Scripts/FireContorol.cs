@@ -31,9 +31,22 @@ public class FireCOntorol : MonoBehaviour
         }
     }
 
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Shoben"))
+        {
+            urineContactTime = 0f;
+        }
+    }
+
     private void OnCollisionStay(Collision collision)
     {
         OnTriggerStay(collision.collider);
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        OnTriggerExit(collision.collider);
     }
 
     private void OnValidate()

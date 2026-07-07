@@ -3,102 +3,72 @@ using UnityEngine;
 
 public class LightController : MonoBehaviour
 {
-    [Header("Fall")]
-    [SerializeField, Min(0.01f)] private float fallSpeed = 5f;
-    [SerializeField] private float groundY;
-    [SerializeField, Min(0f)] private float delayBeforeShake = 3f;
-    [SerializeField, Min(0f)] private float shakeTime = 2f;
-    [SerializeField, Min(0f)] private float shakeAmount = 0.1f;
+    [Header("電気関係")]
+    [SerializeField] private float fallSpeed = 5.0f;
+    [SerializeField] private float groundY = 0.0f;
+    [SerializeField] private float shakeDelay = 3f;
+    private bool isFalling = false;
+    private bool isShaking = false;
+    [SerializeField] private float shakeTime = 2f;
+    [SerializeField] private float shakeAmount = 0.1f;
 
-    [Header("Fire")]
+    [Header("火関連")]
     [SerializeField] private FireCOntorol firePrefab;
-    [SerializeField] private Vector3 fireSpawnOffset = new Vector3(0f, 0.5f, 0f);
 
-    public bool IsFalling { get; private set; }
-
-    private bool isShaking;
-    private bool hasLanded;
-
-    private void Start()
+    void Start()
     {
-        StartCoroutine(FallSequence());
+        StartCoroutine(WaitThenShakeAndFall());
     }
 
-    private void Update()
+    void Update()
     {
-        if (!IsFalling || hasLanded)
+        // 落下
+        if (isFalling)
         {
-            return;
-        }
+            transform.position += Vector3.down * fallSpeed * Time.deltaTime;
 
-        transform.position += Vector3.down * fallSpeed * Time.deltaTime;
-
-        if (transform.position.y <= groundY)
-        {
-            Land();
+            if (transform.position.y <= groundY)
+            {
+                SpawnFire();
+            }
         }
     }
 
-    /// <summary>
-    /// Starts the light's shake-and-fall sequence. Repeated calls are ignored.
-    /// </summary>
-    public void BeginFall()
+    void SpawnFire()
     {
-        if (IsFalling || isShaking || hasLanded)
-        {
-            return;
-        }
+        Vector3 spawnPosition = transform.position;
+        spawnPosition.y += 0.5f;
 
-        StartCoroutine(FallSequence());
-    }
-
-    private IEnumerator FallSequence()
-    {
-        isShaking = true;
-        yield return new WaitForSeconds(delayBeforeShake);
-
-        Vector3 startPosition = transform.position;
-        float elapsed = 0f;
-
-        while (elapsed < shakeTime)
-        {
-            elapsed += Time.deltaTime;
-            float horizontalOffset = Mathf.Sin(elapsed * 20f) * shakeAmount;
-            transform.position = startPosition + Vector3.right * horizontalOffset;
-            yield return null;
-        }
-
-        transform.position = startPosition;
-        isShaking = false;
-        IsFalling = true;
-    }
-
-    private void Land()
-    {
-        hasLanded = true;
-        IsFalling = false;
-
-        Vector3 landingPosition = transform.position;
-        landingPosition.y = groundY;
-        transform.position = landingPosition;
-
-        if (firePrefab != null)
-        {
-            Instantiate(firePrefab, landingPosition + fireSpawnOffset, Quaternion.identity);
-        }
-        else
-        {
-            Debug.LogWarning("LightController: Fire Prefab is not assigned.", this);
-        }
-
+        Instantiate(firePrefab, spawnPosition, Quaternion.identity);
         Destroy(gameObject);
     }
 
-    private void OnValidate()
+    private IEnumerator WaitThenShakeAndFall()
     {
-        fallSpeed = Mathf.Max(0.01f, fallSpeed);
-        delayBeforeShake = Mathf.Max(0f, delayBeforeShake);
-        shakeTime = Mathf.Max(0f, shakeTime);
-        shakeAmount = Mathf.Max(0f, shakeAmount);
+        yield return new WaitForSeconds(shakeDelay);
+        yield return ShakeThenFall();
+    }
+
+    private IEnumerator ShakeThenFall()
+    {
+        isShaking = true;
+
+        Vector3 startPos = transform.position;
+        float timer = 0f;
+
+        while (timer < shakeTime)
+        {
+            timer += Time.deltaTime;
+
+            float x = Mathf.Sin(timer * 20f) * shakeAmount;
+            transform.position = startPos + new Vector3(x, 0, 0);
+
+            yield return null;
+        }
+
+        transform.position = startPos;
+
+        isShaking = false;
+        isFalling = true;
     }
 }

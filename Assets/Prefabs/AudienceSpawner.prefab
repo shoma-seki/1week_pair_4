@@ -50,5 +50,7 @@ MonoBehaviour:
   spawnInterval: 10
   spawnCount: 1
   forwardOffset: 15
-  horizontalRange: {x: -5, y: 5}
+  forwardRandomRange: {x: -2, y: 2}
+  centerSpace: 2
+  audienceSpacing: 2
   spawnHeight: 0
