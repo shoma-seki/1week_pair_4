@@ -1,260 +1,159 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// シーンに配置済みのスポットライトを、手前から奥へ順番に点灯します。
+/// </summary>
 public class RunwaySpotlights : MonoBehaviour
 {
-    [Header("Layout")]
-    [SerializeField, Min(1)] private int pairCount = 8;
-    [SerializeField, Min(0f)] private float sideOffset = 10f;
-    [SerializeField, Min(0f)] private float height = 14f;
-    [SerializeField] private float firstPairZ = 35f;
-    [SerializeField, Min(0.1f)] private float pairSpacing = 35f;
+    [Header("Target Lights")]
+    [Tooltip("空の場合は、シーン内にある全ての Spot Light を自動収集します。")]
+    [SerializeField] private List<Light> spotlights = new List<Light>();
 
-    [Header("Light")]
-    [SerializeField] private Color primaryColor = new Color(1f, 0.18f, 0.55f);
-    [SerializeField] private Color secondaryColor = new Color(0.15f, 0.65f, 1f);
-    [SerializeField, Min(0f)] private float peakIntensity = 5000f;
-    [SerializeField, Min(0.1f)] private float range = 30f;
-    [SerializeField, Range(1f, 179f)] private float spotAngle = 42f;
-    [SerializeField, Range(0.05f, 1f)] private float fadeDurationInBeats = 0.8f;
+    [Header("Sequence")]
+    [SerializeField, Min(0f)] private float startDelay;
+    [SerializeField, Min(0.01f)] private float interval = 0.25f;
+    [SerializeField] private bool playOnStart = true;
+    [Tooltip("最後まで点灯した後、先頭から繰り返します。")]
+    [SerializeField] private bool loop;
+    [Tooltip("再生開始時に対象ライトを全て消灯します。")]
+    [SerializeField] private bool turnOffBeforePlay = true;
 
-    [Header("Visible Beam")]
-    [SerializeField] private bool showBeams = true;
-    [SerializeField, Range(0.01f, 1f)] private float beamOpacity = 0.18f;
-    [SerializeField, Range(0.01f, 1f)] private float beamEdgeSoftness = 0.4f;
-    [SerializeField, Range(0f, 1f)] private float beamNoiseStrength = 0.12f;
-    [SerializeField, Range(8, 48)] private int beamSegments = 24;
-
-    private MusicManager musicManager;
-    private Light[] leftLights;
-    private Light[] rightLights;
-    private MeshRenderer[] leftBeams;
-    private MeshRenderer[] rightBeams;
-    private Material beamMaterial;
-    private Mesh beamMesh;
-    private MaterialPropertyBlock beamProperties;
-    private int activePair = -1;
-
-    private static readonly int ColorId = Shader.PropertyToID("_Color");
-    private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
-    private static readonly int EdgeSoftnessId = Shader.PropertyToID("_EdgeSoftness");
-    private static readonly int NoiseStrengthId = Shader.PropertyToID("_NoiseStrength");
+    private static RunwaySpotlights automaticController;
+    private Coroutine sequenceCoroutine;
+    private bool usesAutomaticTargets;
 
     private void Awake()
     {
-        beamProperties = new MaterialPropertyBlock();
-        CreateLights();
+        usesAutomaticTargets = spotlights.Count == 0;
+        RefreshLights();
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        musicManager = FindAnyObjectByType<MusicManager>();
-        if (musicManager == null)
-        {
-            Debug.LogWarning("MusicManagerが見つからないため、スポットライトを同期できません。", this);
-            return;
-        }
-
-        musicManager.Beat += OnBeat;
-    }
-
-    private void OnDestroy()
-    {
-        if (musicManager != null)
-        {
-            musicManager.Beat -= OnBeat;
-        }
-
-        if (beamMaterial != null)
-        {
-            Destroy(beamMaterial);
-        }
-        if (beamMesh != null)
-        {
-            Destroy(beamMesh);
-        }
-    }
-
-    private void Update()
-    {
-        if (musicManager == null || activePair < 0)
+        if (!usesAutomaticTargets)
         {
             return;
         }
 
-        float fadeDuration = Mathf.Max(0.01f, (float)musicManager.SecondsPerBeat * fadeDurationInBeats);
-        float intensityStep = peakIntensity / fadeDuration * Time.deltaTime;
-
-        for (int i = 0; i < pairCount; i++)
+        if (automaticController != null && automaticController != this)
         {
-            float target = i == activePair ? peakIntensity : 0f;
-            FadeLight(leftLights[i], target, intensityStep);
-            FadeLight(rightLights[i], target, intensityStep);
-            UpdateBeam(leftLights[i], leftBeams[i]);
-            UpdateBeam(rightLights[i], rightBeams[i]);
-        }
-    }
-
-    private void OnBeat(int beatIndex)
-    {
-        activePair = beatIndex % pairCount;
-        leftLights[activePair].enabled = true;
-        rightLights[activePair].enabled = true;
-    }
-
-    private void CreateLights()
-    {
-        leftLights = new Light[pairCount];
-        rightLights = new Light[pairCount];
-        leftBeams = new MeshRenderer[pairCount];
-        rightBeams = new MeshRenderer[pairCount];
-
-        if (showBeams)
-        {
-            Shader shader = Shader.Find("Custom/VolumetricSpotlight");
-            if (shader != null)
-            {
-                beamMaterial = new Material(shader) { name = "Runtime Volumetric Spotlight" };
-                beamMesh = CreateBeamMesh(beamSegments);
-            }
-            else
-            {
-                Debug.LogWarning("Custom/VolumetricSpotlight shader was not found. Beams are disabled.", this);
-            }
-        }
-
-        for (int i = 0; i < pairCount; i++)
-        {
-            float z = firstPairZ + pairSpacing * i;
-            Color color = i % 2 == 0 ? primaryColor : secondaryColor;
-            leftLights[i] = CreateSpotlight($"Spotlight {i + 1:00} L", new Vector3(-sideOffset, height, z), color);
-            rightLights[i] = CreateSpotlight($"Spotlight {i + 1:00} R", new Vector3(sideOffset, height, z), color);
-            leftBeams[i] = CreateBeam(leftLights[i]);
-            rightBeams[i] = CreateBeam(rightLights[i]);
-        }
-    }
-
-    private MeshRenderer CreateBeam(Light spotlight)
-    {
-        if (beamMaterial == null || beamMesh == null)
-        {
-            return null;
-        }
-
-        GameObject beamObject = new GameObject("Visible Beam");
-        beamObject.transform.SetParent(spotlight.transform, false);
-        float radius = Mathf.Tan(spotAngle * 0.5f * Mathf.Deg2Rad) * range;
-        beamObject.transform.localScale = new Vector3(radius, radius, range);
-
-        MeshFilter filter = beamObject.AddComponent<MeshFilter>();
-        filter.sharedMesh = beamMesh;
-        MeshRenderer renderer = beamObject.AddComponent<MeshRenderer>();
-        renderer.sharedMaterial = beamMaterial;
-        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        renderer.receiveShadows = false;
-        renderer.enabled = false;
-        return renderer;
-    }
-
-    private void UpdateBeam(Light spotlight, MeshRenderer beam)
-    {
-        if (beam == null)
-        {
+            Debug.LogWarning("Spot Light の自動収集コントローラーが複数あるため、このコンポーネントを無効化しました。", this);
+            enabled = false;
             return;
         }
 
-        float normalizedIntensity = peakIntensity > 0f ? spotlight.intensity / peakIntensity : 0f;
-        beam.enabled = normalizedIntensity > 0.001f;
-        if (!beam.enabled)
-        {
-            return;
-        }
-
-        beam.GetPropertyBlock(beamProperties);
-        Color beamColor = spotlight.color;
-        beamColor.a = beamOpacity;
-        beamProperties.SetColor(ColorId, beamColor);
-        beamProperties.SetFloat(IntensityId, normalizedIntensity);
-        beamProperties.SetFloat(EdgeSoftnessId, beamEdgeSoftness);
-        beamProperties.SetFloat(NoiseStrengthId, beamNoiseStrength);
-        beam.SetPropertyBlock(beamProperties);
-    }
-
-    private static Mesh CreateBeamMesh(int segments)
-    {
-        // Unit cone pointing along local +Z. Transform scaling sets its radius and range.
-        Vector3[] vertices = new Vector3[segments + 1];
-        Vector3[] normals = new Vector3[segments + 1];
-        Vector2[] uvs = new Vector2[segments + 1];
-        int[] triangles = new int[segments * 3];
-        vertices[0] = Vector3.zero;
-        normals[0] = Vector3.back;
-        uvs[0] = Vector2.zero;
-
-        for (int i = 0; i < segments; i++)
-        {
-            float angle = Mathf.PI * 2f * i / segments;
-            Vector3 radial = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
-            vertices[i + 1] = radial + Vector3.forward;
-            normals[i + 1] = new Vector3(radial.x, radial.y, -1f).normalized;
-            uvs[i + 1] = new Vector2((float)i / segments, 1f);
-
-            int triangle = i * 3;
-            triangles[triangle] = 0;
-            triangles[triangle + 1] = i + 1;
-            triangles[triangle + 2] = (i + 1) % segments + 1;
-        }
-
-        Mesh mesh = new Mesh { name = "Runtime Spotlight Beam" };
-        mesh.vertices = vertices;
-        mesh.normals = normals;
-        mesh.uv = uvs;
-        mesh.triangles = triangles;
-        mesh.RecalculateBounds();
-        return mesh;
+        automaticController = this;
     }
 
     private void OnDisable()
     {
-        if (leftBeams == null)
+        Stop();
+        if (automaticController == this)
+        {
+            automaticController = null;
+        }
+    }
+
+    private void Start()
+    {
+        if (playOnStart)
+        {
+            Play();
+        }
+    }
+
+    [ContextMenu("Play")]
+    public void Play()
+    {
+        Stop();
+        RefreshLights();
+
+        if (spotlights.Count == 0)
+        {
+            Debug.LogWarning("点灯対象の Spot Light が見つかりません。", this);
+            return;
+        }
+
+        sequenceCoroutine = StartCoroutine(PlaySequence());
+    }
+
+    [ContextMenu("Stop")]
+    public void Stop()
+    {
+        if (sequenceCoroutine == null)
         {
             return;
         }
 
-        foreach (MeshRenderer beam in leftBeams)
+        StopCoroutine(sequenceCoroutine);
+        sequenceCoroutine = null;
+    }
+
+    [ContextMenu("Turn Off All")]
+    public void TurnOffAll()
+    {
+        foreach (Light spotlight in spotlights)
         {
-            if (beam != null) beam.enabled = false;
-        }
-        foreach (MeshRenderer beam in rightBeams)
-        {
-            if (beam != null) beam.enabled = false;
+            if (spotlight != null)
+            {
+                spotlight.enabled = false;
+            }
         }
     }
 
-    private Light CreateSpotlight(string lightName, Vector3 localPosition, Color color)
+    [ContextMenu("Refresh Lights")]
+    public void RefreshLights()
     {
-        GameObject lightObject = new GameObject(lightName);
-        lightObject.transform.SetParent(transform, false);
-        lightObject.transform.localPosition = localPosition;
-        lightObject.transform.LookAt(transform.TransformPoint(new Vector3(0f, 0f, localPosition.z)));
+        spotlights.RemoveAll(light => light == null || light.type != LightType.Spot);
 
-        Light spotlight = lightObject.AddComponent<Light>();
-        spotlight.type = LightType.Spot;
-        spotlight.color = color;
-        spotlight.intensity = 0f;
-        spotlight.range = range;
-        spotlight.spotAngle = spotAngle;
-        spotlight.innerSpotAngle = spotAngle * 0.65f;
-        spotlight.shadows = LightShadows.None;
-        spotlight.enabled = false;
-        return spotlight;
+        if (spotlights.Count == 0)
+        {
+            Light[] sceneLights = FindObjectsByType<Light>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (Light lightComponent in sceneLights)
+            {
+                if (lightComponent.type == LightType.Spot)
+                {
+                    spotlights.Add(lightComponent);
+                }
+            }
+        }
+
+        spotlights.Sort((a, b) => a.transform.position.z.CompareTo(b.transform.position.z));
     }
 
-    private static void FadeLight(Light spotlight, float target, float step)
+    private IEnumerator PlaySequence()
     {
-        spotlight.intensity = Mathf.MoveTowards(spotlight.intensity, target, step);
-        if (target <= 0f && spotlight.intensity <= 0f)
+        if (turnOffBeforePlay)
         {
-            spotlight.enabled = false;
+            TurnOffAll();
         }
+
+        if (startDelay > 0f)
+        {
+            yield return new WaitForSeconds(startDelay);
+        }
+
+        do
+        {
+            foreach (Light spotlight in spotlights)
+            {
+                if (spotlight != null)
+                {
+                    spotlight.enabled = true;
+                }
+
+                yield return new WaitForSeconds(interval);
+            }
+
+            if (loop)
+            {
+                TurnOffAll();
+            }
+        }
+        while (loop);
+
+        sequenceCoroutine = null;
     }
 }

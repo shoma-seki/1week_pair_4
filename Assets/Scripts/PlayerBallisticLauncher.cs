@@ -15,7 +15,6 @@ public class PlayerBallisticLauncher : MonoBehaviour
     [Header("Trajectory")]
     [Tooltip("発射点と着地点のうち、高い方から測った放物線の高さ")]
     [SerializeField, Min(0.01f)] private float arcHeight = 3f;
-    [SerializeField, Range(0.05f, 1f)] private float strongestArcHeightMultiplier = 0.35f;
     [SerializeField] private Vector3 launchOffset;
 
     [Header("Urine Stream")]
@@ -29,19 +28,12 @@ public class PlayerBallisticLauncher : MonoBehaviour
     [SerializeField, Min(0.01f)] private float disappearDuration = 0.35f;
     [SerializeField] private Color streamColor = new Color(1f, 0.82f, 0.12f, 0.9f);
 
-    [Header("Charge Stages")]
-    [SerializeField, Min(0f)] private float secondStageTime = 0.5f;
-    [SerializeField, Min(0f)] private float thirdStageTime = 1.5f;
-    [SerializeField, Min(0f)] private float firstStageMultiplier = 1.25f;
-    [SerializeField, Min(0f)] private float secondStageMultiplier = 1.5f;
-    [SerializeField, Min(0f)] private float thirdStageMultiplier = 2f;
     [Tooltip("三段階目の間だけ再生するプレハブ。LineRenderer があれば放物線として更新します。")]
 
     [Header("Input")]
     [SerializeField, Min(0)] private int mouseButton;
 
     private Material generatedStreamMaterial;
-    private float holdDuration;
     private float disappearProgress = 1f;
     private bool wasFiring;
     private ParticleSystem[] childParticleSystems;
@@ -71,7 +63,6 @@ public class PlayerBallisticLauncher : MonoBehaviour
     {
         if (Input.GetMouseButton(mouseButton) && player != null && player.CanUrinate)
         {
-            holdDuration += Time.deltaTime;
             DrawHeldStream();
         }
         else
@@ -88,7 +79,6 @@ public class PlayerBallisticLauncher : MonoBehaviour
         }
 
         SetChildParticlesPlaying(false);
-        holdDuration = 0f;
     }
 
     private void OnDestroy()
@@ -257,21 +247,12 @@ public class PlayerBallisticLauncher : MonoBehaviour
 
     private float GetStageMultiplier()
     {
-        if (holdDuration >= thirdStageTime) return thirdStageMultiplier;
-        if (holdDuration >= secondStageTime)
-        {
-            return Mathf.Lerp(secondStageMultiplier, thirdStageMultiplier,
-                Mathf.InverseLerp(secondStageTime, thirdStageTime, holdDuration));
-        }
-
-        return Mathf.Lerp(firstStageMultiplier, secondStageMultiplier,
-            Mathf.InverseLerp(0f, secondStageTime, holdDuration));
+        return player != null ? player.GetChargeStrengthMultiplier() : 1f;
     }
 
     private float GetCurrentArcHeight()
     {
-        float charge = Mathf.InverseLerp(0f, thirdStageTime, holdDuration);
-        return arcHeight * Mathf.Lerp(1f, strongestArcHeightMultiplier, charge);
+        return arcHeight * (player != null ? player.CurrentArcHeightMultiplier : 1f);
     }
 
     private void CacheChildParticleSystems()
@@ -310,7 +291,6 @@ public class PlayerBallisticLauncher : MonoBehaviour
 
     private void StopStream()
     {
-        holdDuration = 0f;
         SetChildParticlesPlaying(false);
 
         if (!wasFiring || streamRenderer == null || !streamRenderer.enabled)
