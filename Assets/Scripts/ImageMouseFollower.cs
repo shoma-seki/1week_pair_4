@@ -4,6 +4,8 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Image))]
 public class ImageMouseFollower : MonoBehaviour
 {
+    [SerializeField] private CameraRaycaster cameraRaycaster;
+
     private RectTransform imageRectTransform;
     private RectTransform parentRectTransform;
     private Canvas parentCanvas;
@@ -13,6 +15,11 @@ public class ImageMouseFollower : MonoBehaviour
         imageRectTransform = GetComponent<RectTransform>();
         parentRectTransform = imageRectTransform.parent as RectTransform;
         parentCanvas = GetComponentInParent<Canvas>();
+
+        if (cameraRaycaster == null)
+        {
+            cameraRaycaster = FindAnyObjectByType<CameraRaycaster>();
+        }
     }
 
     private void Update()
@@ -28,7 +35,9 @@ public class ImageMouseFollower : MonoBehaviour
 
         if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 parentRectTransform,
-                Input.mousePosition,
+                cameraRaycaster != null
+                    ? cameraRaycaster.AimScreenPosition
+                    : (Vector2)Input.mousePosition,
                 eventCamera,
                 out Vector2 localPoint))
         {

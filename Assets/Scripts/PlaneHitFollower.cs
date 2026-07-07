@@ -9,16 +9,8 @@ public class PlaneHitFollower : MonoBehaviour
     [SerializeField] private Vector3 positionOffset;
     [SerializeField, Min(0f)] private float forwardOffsetFromPlayer;
 
-    [Header("Radius")]
-    [SerializeField] private float secondStageTime = 0.5f;
-    [SerializeField] private float thirdStageTime = 1.5f;
-    [SerializeField] private float firstStageMultiplier = 1.25f;
-    [SerializeField] private float secondStageMultiplier = 1.5f;
-    [SerializeField] private float thirdStageMultiplier = 2f;
-
     private CapsuleCollider capsuleCollider;
     private float initialRadius;
-    private float clickDuration;
     private Player playerResource;
     private ParticleSystem[] childParticleSystems;
     private bool particlesPlaying;
@@ -99,25 +91,11 @@ public class PlaneHitFollower : MonoBehaviour
         {
             capsuleCollider.enabled = true;
             SetChildParticlesPlaying(true);
-            clickDuration += Time.deltaTime;
-
-            if (clickDuration >= thirdStageTime)
-            {
-                capsuleCollider.radius = initialRadius * thirdStageMultiplier;
-            }
-            else if (clickDuration >= secondStageTime)
-            {
-                capsuleCollider.radius = initialRadius * secondStageMultiplier;
-            }
-            else
-            {
-                capsuleCollider.radius = initialRadius * firstStageMultiplier;
-            }
+            capsuleCollider.radius = initialRadius * playerResource.CurrentStageStrengthMultiplier;
 
             return;
         }
 
-        clickDuration = 0f;
         capsuleCollider.radius = initialRadius;
         capsuleCollider.enabled = false;
         SetChildParticlesPlaying(false);

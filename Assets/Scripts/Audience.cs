@@ -3,6 +3,13 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class Audience : MonoBehaviour
 {
+    // シェーダー側のプロパティ名を毎回文字列で書かず、取り違えを防ぐためのID。
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private static readonly int FanColorId = Shader.PropertyToID("_FanColor");
+    private static readonly int FanFillId = Shader.PropertyToID("_FanFill");
+    private static readonly int BoundsMinYId = Shader.PropertyToID("_BoundsMinY");
+    private static readonly int BoundsMaxYId = Shader.PropertyToID("_BoundsMaxY");
+
     [Header("Fan")]
     [SerializeField, Min(0f)] private float fanPointPerSecond = 1f;
     [SerializeField, Min(0.01f)] private float fanPointToBecomeFan = 3f;
@@ -10,7 +17,6 @@ public class Audience : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private Vector3 hitOffset;
     [SerializeField] private float moveDuration = 0.3f;
-    [SerializeField] private float returnDelay = 1f;
     [SerializeField] private InterpolationType interpolationType = InterpolationType.Linear;
 
     [Header("Dance Noise")]
@@ -32,15 +38,14 @@ public class Audience : MonoBehaviour
     private Vector3 interpolationStartPosition;
     private Vector3 targetPosition;
     private float interpolationTime;
-    private float timeAfterExit;
-    private bool isReturning;
-    private bool isWaitingToReturn;
     private float noiseSeed;
     private Color interpolationStartColor;
     private Color targetInterpolationColor;
     private Material targetMaterial;
     private float spawnColorTime;
     private bool isSpawnColorTransitioning;
+    private bool hasBeenHit;
+    private bool hasMovedToFanOffset;
 
     private void Start()
     {
@@ -55,11 +60,13 @@ public class Audience : MonoBehaviour
         if (targetRenderer != null)
         {
             targetMaterial = targetRenderer.material;
-            targetMaterial.color = spawnColorDuration > 0f ? spawnColor : waitingColor;
-            targetMaterial.SetColor("_FanColor", targetColor);
-            targetMaterial.SetFloat("_FanFill", 0f);
-            targetMaterial.SetFloat("_BoundsMinY", targetRenderer.localBounds.min.y);
-            targetMaterial.SetFloat("_BoundsMaxY", targetRenderer.localBounds.max.y);
+            // 通常時の体色と、ファン化した時に使う色を最初にシェーダーへ渡しておく。
+            SetBodyBaseColor(spawnColorDuration > 0f ? spawnColor : waitingColor);
+            targetMaterial.SetColor(FanColorId, targetColor);
+            targetMaterial.SetFloat(FanFillId, 0f);
+            // 体の下から上へゲージを伸ばすため、モデルの高さ情報も渡す。
+            targetMaterial.SetFloat(BoundsMinYId, targetRenderer.localBounds.min.y);
+            targetMaterial.SetFloat(BoundsMaxYId, targetRenderer.localBounds.max.y);
             isSpawnColorTransitioning = spawnColorDuration > 0f;
         }
 
@@ -83,35 +90,18 @@ public class Audience : MonoBehaviour
             BeginReturnWait();
         }
 
-        if (IsTouchingPlaneHitFollower)
+        if (IsFan)
         {
-            MoveToTarget();
+            if (hasBeenHit && interpolationTime < moveDuration)
+            {
+                MoveToTarget();
+            }
+
             ApplyDanceNoise();
             return;
         }
 
-        if (isWaitingToReturn)
-        {
-            timeAfterExit += Time.deltaTime;
-            MoveToTarget();
-
-            bool hasReachedOffset = moveDuration <= 0f || interpolationTime >= moveDuration;
-
-            if (timeAfterExit >= returnDelay && hasReachedOffset)
-            {
-                StartReturningIfNeeded();
-                return;
-            }
-
-            if (timeAfterExit < returnDelay)
-            {
-                ApplyDanceNoise();
-            }
-
-            return;
-        }
-
-        if (isReturning)
+        if (hasBeenHit && interpolationTime < moveDuration)
         {
             MoveToTarget();
         }
@@ -131,7 +121,8 @@ public class Audience : MonoBehaviour
 
         if (targetMaterial != null)
         {
-            targetMaterial.SetFloat("_FanFill", FanPoint / fanPointToBecomeFan);
+            // ファン度の割合を 0～1 にして、シェーダーの塗りつぶし量として使う。
+            targetMaterial.SetFloat(FanFillId, FanPoint / fanPointToBecomeFan);
         }
 
         if (FanPoint < fanPointToBecomeFan)
@@ -141,6 +132,7 @@ public class Audience : MonoBehaviour
 
         IsFan = true;
         FanManager.Instance.AddFan();
+        MoveToFanOffset();
     }
 
     private void UpdateSpawnColor()
@@ -152,7 +144,7 @@ public class Audience : MonoBehaviour
 
         spawnColorTime += Time.deltaTime;
         float rate = Mathf.Clamp01(spawnColorTime / spawnColorDuration);
-        targetMaterial.color = Color.Lerp(spawnColor, waitingColor, rate);
+        SetBodyBaseColor(Color.Lerp(spawnColor, waitingColor, rate));
 
         if (rate >= 1f)
         {
@@ -188,11 +180,6 @@ public class Audience : MonoBehaviour
         }
 
         IsTouchingPlaneHitFollower = true;
-        isSpawnColorTransitioning = false;
-        isReturning = false;
-        isWaitingToReturn = false;
-        timeAfterExit = 0f;
-        BeginInterpolation(initialPosition + hitOffset, waitingColor);
     }
 
     private void HandleExit(Collider other)
@@ -212,22 +199,22 @@ public class Audience : MonoBehaviour
             return;
         }
 
+        // 一度たまったファン度はそのまま残し、接触判定だけ外す。
         IsTouchingPlaneHitFollower = false;
-        isReturning = false;
-        isWaitingToReturn = true;
-        timeAfterExit = 0f;
     }
 
-    private void StartReturningIfNeeded()
+    private void MoveToFanOffset()
     {
-        if (isReturning)
+        if (hasMovedToFanOffset)
         {
             return;
         }
 
-        isReturning = true;
-        isWaitingToReturn = false;
-        BeginInterpolation(initialPosition, waitingColor);
+        // 触れてすぐではなく、ファンになった瞬間に移動と通常色への切り替えを始める。
+        hasMovedToFanOffset = true;
+        hasBeenHit = true;
+        isSpawnColorTransitioning = false;
+        BeginInterpolation(initialPosition + hitOffset, waitingColor);
     }
 
     private void ApplyDanceNoise()
@@ -238,16 +225,22 @@ public class Audience : MonoBehaviour
         );
 
         float verticalOffset = (noise * 2f - 1f) * danceAmplitude;
-        transform.position += Vector3.up * verticalOffset;
+
+        // 毎フレーム現在位置へ加算すると少しずつ位置がずれてしまうため、
+        // 移動後の基準位置を中心にして上下させる。
+        Vector3 danceCenter = interpolationTime < moveDuration
+            ? transform.position
+            : targetPosition;
+
+        transform.position = danceCenter + Vector3.up * verticalOffset;
     }
 
     private void BeginInterpolation(Vector3 newTargetPosition, Color newTargetColor)
     {
         interpolationStartPosition = transform.position;
         targetPosition = newTargetPosition;
-        interpolationStartColor = targetMaterial != null
-            ? targetMaterial.color
-            : waitingColor;
+        // 補間開始時点の体色を保持しておくと、移動中も色が急に飛ばない。
+        interpolationStartColor = GetBodyBaseColor();
         targetInterpolationColor = newTargetColor;
         interpolationTime = 0f;
     }
@@ -260,7 +253,7 @@ public class Audience : MonoBehaviour
 
             if (targetMaterial != null)
             {
-                targetMaterial.color = targetInterpolationColor;
+                SetBodyBaseColor(targetInterpolationColor);
             }
 
             return;
@@ -278,13 +271,44 @@ public class Audience : MonoBehaviour
 
         if (targetMaterial != null)
         {
-            targetMaterial.color = InterpolationUtility.Interpolate(
+            SetBodyBaseColor(InterpolationUtility.Interpolate(
                 interpolationStartColor,
                 targetInterpolationColor,
                 rate,
                 interpolationType
-            );
+            ));
         }
+    }
+
+    private Color GetBodyBaseColor()
+    {
+        if (targetMaterial == null)
+        {
+            return waitingColor;
+        }
+
+        if (targetMaterial.HasProperty(BaseColorId))
+        {
+            return targetMaterial.GetColor(BaseColorId);
+        }
+
+        return targetMaterial.color;
+    }
+
+    private void SetBodyBaseColor(Color color)
+    {
+        if (targetMaterial == null)
+        {
+            return;
+        }
+
+        if (targetMaterial.HasProperty(BaseColorId))
+        {
+            targetMaterial.SetColor(BaseColorId, color);
+        }
+
+        // 通常の Material.color を参照する処理が残っていても見た目が揃うようにしておく。
+        targetMaterial.color = color;
     }
 
     private void OnValidate()

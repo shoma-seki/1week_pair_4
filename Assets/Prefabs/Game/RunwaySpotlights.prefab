@@ -44,14 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e28ce31841d4b3fbc0ff67b0dc9d7bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunwaySpotlights
-  pairCount: 8
-  sideOffset: 10
-  height: 14
-  firstPairZ: 35
-  pairSpacing: 35
-  primaryColor: {r: 1, g: 0.18, b: 0.55, a: 1}
-  secondaryColor: {r: 0.15, g: 0.65, b: 1, a: 1}
-  peakIntensity: 5000
-  range: 30
-  spotAngle: 42
-  fadeDurationInBeats: 0.8
+  spotlights: []
+  resultCamera: {fileID: 0}
+  activationOffset: 0
+  interval: 0.25
+  playOnStart: 1
+  turnOffBeforePlay: 1

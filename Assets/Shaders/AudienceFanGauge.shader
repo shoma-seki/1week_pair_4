@@ -43,7 +43,7 @@ Shader "Custom/AudienceFanGauge"
             {
                 float4 positionHCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
-                float heightOS : TEXCOORD1;
+                float fillHeight : TEXCOORD1;
             };
 
             TEXTURE2D(_BaseMap);
@@ -64,7 +64,9 @@ Shader "Custom/AudienceFanGauge"
                 Varyings output;
                 output.positionHCS = TransformObjectToHClip(input.positionOS.xyz);
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
-                output.heightOS = input.positionOS.y;
+                // Use the mesh UV before texture tiling/offset so the fill always
+                // progresses from the bottom (0) to the top (1) of the audience.
+                output.fillHeight = input.uv.y;
                 return output;
             }
 
@@ -73,10 +75,9 @@ Shader "Custom/AudienceFanGauge"
                 half4 textureColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
                 clip(textureColor.a - _Cutoff);
 
-                float normalizedHeight = saturate(
-                    (input.heightOS - _BoundsMinY) / max(_BoundsMaxY - _BoundsMinY, 0.0001)
-                );
-                half isFilled = step(normalizedHeight, _FanFill);
+                // Increase the fan-colored area upward instead of blending the
+                // color of the whole mesh at once.
+                half isFilled = step(saturate(input.fillHeight), saturate(_FanFill));
                 half4 gaugeColor = lerp(_BaseColor, _FanColor, isFilled);
                 return textureColor * gaugeColor;
             }

@@ -3,7 +3,6 @@ using UnityEngine;
 public class Obstacle : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 8f;
-    [SerializeField] private MeshRenderer meshRenderer;
     [SerializeField] private float lifeTime = 3f;
     [SerializeField] private Vector3 moveDirection = Vector3.left;　　//飛ぶ向き
 
@@ -11,10 +10,13 @@ public class Obstacle : MonoBehaviour
     private bool isMoving = false;
     private bool isShrinking = false;
 
+    [SerializeField] private GameObject child;
+    MeshRenderer meshRenderer;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-
+        meshRenderer = TryGetComponent<MeshRenderer>(out var renderer) ? renderer : child.GetComponent<MeshRenderer>();
         meshRenderer.enabled = false;
         startPosition = transform.position;
     }
@@ -24,7 +26,7 @@ public class Obstacle : MonoBehaviour
     {
         if (isMoving)
         {
-           
+
             transform.position += moveDirection * moveSpeed * Time.deltaTime;
 
         }
@@ -46,7 +48,7 @@ public class Obstacle : MonoBehaviour
     //当たり判定とプレイヤーがぶつかたら
     public void StartMove()
     {
-        
+
         if (isMoving) return;
 
         meshRenderer.enabled = true;
@@ -62,7 +64,7 @@ public class Obstacle : MonoBehaviour
         {
             //
             //Debug.Log("あたた");
-           Destroy(gameObject);
+            Destroy(gameObject);
 
         }
 

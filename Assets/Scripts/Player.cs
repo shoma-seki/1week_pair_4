@@ -3,9 +3,21 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    public enum UrineStage { First, Second, Third }
+
     [Header("Urine Resource")]
     [SerializeField, Min(0.01f)] private float maxUrine = 100f;
     [SerializeField, Min(0f)] private float urineConsumptionPerSecond = 20f;
+
+    [Header("Urine Stages")]
+    [SerializeField, Min(0f)] private float secondStageTime = 0.5f;
+    [SerializeField, Min(0f)] private float thirdStageTime = 1.5f;
+    [SerializeField, Min(0f)] private float firstStageStrengthMultiplier = 1.25f;
+    [SerializeField, Min(0f)] private float secondStageStrengthMultiplier = 1.5f;
+    [SerializeField, Min(0f)] private float thirdStageStrengthMultiplier = 2f;
+    [SerializeField, Range(0f, 1f)] private float secondStageAimSpeedMultiplier = 0.5f;
+    [SerializeField, Range(0f, 1f)] private float thirdStageAimSpeedMultiplier = 0.25f;
+    [SerializeField, Range(0.05f, 1f)] private float thirdStageArcHeightMultiplier = 0.35f;
 
     [Header("Beat Movement")]
     [SerializeField, Min(0f)] private float distancePerBeat = 2.5f;
@@ -27,6 +39,7 @@ public class Player : MonoBehaviour
     private Vector3 startPosition;
     private float distanceTraveled;
     private bool canMove = true;
+    private float urineHoldDuration;
 
     public float CurrentUrine => currentUrine;
     public float MaxUrine => maxUrine;
@@ -35,6 +48,24 @@ public class Player : MonoBehaviour
     public float DistanceTraveled => distanceTraveled;
     public bool CanMove => canMove;
     public bool IsMoving => isMoving;
+    public float UrineHoldDuration => urineHoldDuration;
+    public UrineStage CurrentUrineStage => urineHoldDuration >= thirdStageTime
+        ? UrineStage.Third
+        : urineHoldDuration >= secondStageTime ? UrineStage.Second : UrineStage.First;
+    public float CurrentStageStrengthMultiplier => CurrentUrineStage switch
+    {
+        UrineStage.Third => thirdStageStrengthMultiplier,
+        UrineStage.Second => secondStageStrengthMultiplier,
+        _ => firstStageStrengthMultiplier
+    };
+    public float CurrentAimSpeedMultiplier => CurrentUrineStage switch
+    {
+        UrineStage.Third => thirdStageAimSpeedMultiplier,
+        UrineStage.Second => secondStageAimSpeedMultiplier,
+        _ => 1f
+    };
+    public float CurrentArcHeightMultiplier => Mathf.Lerp(1f, thirdStageArcHeightMultiplier,
+        Mathf.InverseLerp(0f, thirdStageTime, urineHoldDuration));
 
     public event Action<float, float> UrineChanged;
     public event Action<float> DistanceChanged;
@@ -71,6 +102,7 @@ public class Player : MonoBehaviour
     {
         UpdateDistanceTraveled();
         UpdateUrineResource();
+        UpdateUrineStage();
 
         if (!isMoving)
         {
@@ -131,10 +163,38 @@ public class Player : MonoBehaviour
         UrineChanged?.Invoke(currentUrine, maxUrine);
     }
 
+    private void UpdateUrineStage()
+    {
+        urineHoldDuration = Input.GetMouseButton(0) && CanUrinate
+            ? urineHoldDuration + Time.deltaTime
+            : 0f;
+    }
+
+    public float GetChargeStrengthMultiplier()
+    {
+        if (urineHoldDuration >= thirdStageTime) return thirdStageStrengthMultiplier;
+        if (urineHoldDuration >= secondStageTime)
+        {
+            return Mathf.Lerp(secondStageStrengthMultiplier, thirdStageStrengthMultiplier,
+                Mathf.InverseLerp(secondStageTime, thirdStageTime, urineHoldDuration));
+        }
+
+        return Mathf.Lerp(firstStageStrengthMultiplier, secondStageStrengthMultiplier,
+            Mathf.InverseLerp(0f, secondStageTime, urineHoldDuration));
+    }
+
     private void OnValidate()
     {
         maxUrine = Mathf.Max(0.01f, maxUrine);
         urineConsumptionPerSecond = Mathf.Max(0f, urineConsumptionPerSecond);
+        secondStageTime = Mathf.Max(0f, secondStageTime);
+        thirdStageTime = Mathf.Max(secondStageTime, thirdStageTime);
+        firstStageStrengthMultiplier = Mathf.Max(0f, firstStageStrengthMultiplier);
+        secondStageStrengthMultiplier = Mathf.Max(0f, secondStageStrengthMultiplier);
+        thirdStageStrengthMultiplier = Mathf.Max(0f, thirdStageStrengthMultiplier);
+        secondStageAimSpeedMultiplier = Mathf.Clamp01(secondStageAimSpeedMultiplier);
+        thirdStageAimSpeedMultiplier = Mathf.Clamp01(thirdStageAimSpeedMultiplier);
+        thirdStageArcHeightMultiplier = Mathf.Clamp(thirdStageArcHeightMultiplier, 0.05f, 1f);
 
         if (Application.isPlaying && currentUrine > maxUrine)
         {

@@ -10,6 +10,16 @@ public enum InterpolationType
 
 public static class InterpolationUtility
 {
+    public static float Interpolate(
+        float start,
+        float end,
+        float time,
+        InterpolationType interpolationType)
+    {
+        float rate = Evaluate(Mathf.Clamp01(time), interpolationType);
+        return Mathf.Lerp(start, end, rate);
+    }
+
     public static Vector3 Interpolate(
         Vector3 start,
         Vector3 end,
