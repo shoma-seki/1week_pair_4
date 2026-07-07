@@ -8,6 +8,7 @@ TagManager:
   - Shoben
   - Audience
   - CheckCollider
+  - Fire
   layers:
   - Default
   - TransparentFX

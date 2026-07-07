@@ -29,6 +29,16 @@ public class FireCOntorol : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        //Audience audience = other.GetComponent<Audience>();
+
+        //if (audience != null)
+        //{
+        //    Debug.Log("AudienceéÊìæÅI");
+        //    audience.DecreaseFanPoint();
+        //}
+
+        //Debug.Log(other.name);
     }
 
     private void OnTriggerExit(Collider other)
