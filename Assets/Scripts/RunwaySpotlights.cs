@@ -89,6 +89,16 @@ public class RunwaySpotlights : MonoBehaviour
             if (spotlight != null) spotlight.enabled = false;
     }
 
+    [ContextMenu("Turn On All")]
+    public void TurnOnAll()
+    {
+        Stop();
+        RefreshLights();
+        foreach (Light spotlight in spotlights)
+            if (spotlight != null) spotlight.enabled = true;
+        nextLightIndex = spotlights.Count;
+    }
+
     [ContextMenu("Refresh Lights")]
     public void RefreshLights()
     {

@@ -7,6 +7,8 @@ public class SceneChange : MonoBehaviour
 {
     public static SceneChange Instance { get; private set; }
 
+    private GameObject sceneChangeCanvas;
+
     [Header("Fade")]
     [SerializeField] private Image fadeImage;
     [SerializeField] private float fadeTime = 0.5f;
@@ -15,18 +17,55 @@ public class SceneChange : MonoBehaviour
 
     private void Awake()
     {
+        Canvas canvas = fadeImage != null ? fadeImage.GetComponentInParent<Canvas>(true) : null;
+        sceneChangeCanvas = canvas != null ? canvas.gameObject : null;
+
         if (Instance != null && Instance != this)
         {
+            if (fadeImage != null)
+            {
+                Instance.ApplySceneFadeColor(fadeImage.color);
+            }
+
+            if (sceneChangeCanvas != null)
+            {
+                Destroy(sceneChangeCanvas);
+            }
+
             Destroy(gameObject);
             return;
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
 
-        Color color = fadeImage.color;
-        color.a = 0;
-        fadeImage.color = color;
+        if (sceneChangeCanvas != null)
+        {
+            transform.SetParent(sceneChangeCanvas.transform, false);
+            DontDestroyOnLoad(sceneChangeCanvas);
+        }
+        else
+        {
+            Debug.LogWarning("SceneChangeCanvas was not found. SceneChange will be kept instead.", this);
+            DontDestroyOnLoad(gameObject);
+        }
+
+        if (fadeImage != null)
+        {
+            Color color = fadeImage.color;
+            color.a = 0;
+            fadeImage.color = color;
+        }
+    }
+
+    private void ApplySceneFadeColor(Color sceneColor)
+    {
+        if (fadeImage == null)
+        {
+            return;
+        }
+
+        sceneColor.a = fadeImage.color.a;
+        fadeImage.color = sceneColor;
     }
 
     public void LoadScene(string sceneName)

@@ -1884,7 +1884,7 @@ GameObject:
   - component: {fileID: 1415355531}
   - component: {fileID: 1415355530}
   m_Layer: 5
-  m_Name: Canvas
+  m_Name: SceneChangeCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2004,6 +2004,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   player: {fileID: 0}
   clearDistance: 100
+  clearSceneName: Result
   onGameCleared:
     m_PersistentCalls:
       m_Calls: []
