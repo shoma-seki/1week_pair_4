@@ -11,6 +11,7 @@ public class ResultCameraMover : MonoBehaviour
     [Header("Result Input")]
     [SerializeField, Min(0f)] private float skipInputDelay = 0.5f;
     [SerializeField] private string titleSceneName = "Title";
+    [SerializeField] private bool resetFanCountWhenReturningToTitle = true;
 
     public float TravelledDistance { get; private set; }
     public bool IsMoving { get; private set; }
@@ -61,6 +62,11 @@ public class ResultCameraMover : MonoBehaviour
 
         if (SceneChange.Instance != null)
         {
+            if (resetFanCountWhenReturningToTitle)
+            {
+                FanManager.TryResetFanCount();
+            }
+
             SceneChange.Instance.LoadScene(titleSceneName);
         }
     }

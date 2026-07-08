@@ -31,6 +31,22 @@ public class FanManager : MonoBehaviour
         }
     }
 
+    public static bool TryResetFanCount()
+    {
+        if (instance == null)
+        {
+            instance = FindAnyObjectByType<FanManager>();
+        }
+
+        if (instance == null)
+        {
+            return false;
+        }
+
+        instance.ResetFanCount();
+        return true;
+    }
+
     public int FanCount { get; private set; }
     public event Action<int> FanCountChanged;
 
