@@ -1689,17 +1689,17 @@ MonoBehaviour:
   zoomInAmount: 0.636
   zoomInDuration: 0.05
   zoomInInterpolationType: 1
-  holdDuration: 0.2
+  holdDuration: 0.5
   returnDuration: 0.5
   returnInterpolationType: 2
   checkColliderZoomInAmount: 0.35
   checkColliderZoomInDuration: 0.1
   checkColliderHoldDuration: 0.25
   checkColliderReturnDuration: 0.8
-  stageChangeShakeAmplitude: 1
+  stageChangeShakeAmplitude: 10
   stageChangeShakeDuration: 0.25
   thirdStageContinuousShakeAmplitude: 0.35
-  shakeFrequency: 2
+  shakeFrequency: 0.5
 --- !u!1 &338528002
 GameObject:
   m_ObjectHideFlags: 0
@@ -2813,6 +2813,13 @@ MonoBehaviour:
   prefix: "\u30D5\u30A1\u30F3      "
   rotateYRange: 15
   rotateYSpeed: 2
+  increaseColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+  decreaseColor: {r: 0.3, g: 0.7, b: 1, a: 1}
+  colorDuration: 0.35
+  increaseDuration: 0.28
+  increaseScaleAmount: 0.22
+  decreaseDuration: 0.28
+  decreaseMoveDistance: 18
 --- !u!114 &734737863
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3516,6 +3523,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
+--- !u!1 &918273645
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 918273646}
+  - component: {fileID: 918273647}
+  m_Layer: 0
+  m_Name: GameAudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &918273646
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 918273645}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &918273647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 918273645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72f3d6b7a31c4d76aa2e23e9700db003, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameAudioManager
+  shobenClip: {fileID: 8300000, guid: ddc91e4a1df879747b5aaf483bfc8f17, type: 3}
+  powerShobenClip: {fileID: 8300000, guid: a15d3532a49635e43a8bb92b9978804c, type: 3}
+  shobenUpClip: {fileID: 8300000, guid: 8458c3d2bfe4e1948accb252fe12e6d4, type: 3}
+  reloadClip: {fileID: 8300000, guid: fca9ebcd7b8815f4ca6a680c56f08066, type: 3}
+  posingClip: {fileID: 8300000, guid: 67241dbba457c764bb40035f1e151a43, type: 3}
+  obstacleClip: {fileID: 8300000, guid: 1b11d15c7b88f224d8f298a957931f9b, type: 3}
+  fanIncreaseClip: {fileID: 8300000, guid: 3283109fdc1c3d64fab8460ca5c4e76c, type: 3}
+  loopVolume: 0.631
+  oneShotVolume: 0.863
 --- !u!4 &918795085 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7295126994186485887, guid: bb3cd1af29f4f5e4290d445dfdf08567, type: 3}
@@ -4551,8 +4611,16 @@ PrefabInstance:
       value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
+      propertyPath: checkColliderSpawnOffset.x
+      value: 0.54
+      objectReference: {fileID: 0}
+    - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
       propertyPath: checkColliderSpawnOffset.y
-      value: -4
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
+      propertyPath: checkColliderSpawnOffset.z
+      value: -1.68
       objectReference: {fileID: 0}
     - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
       propertyPath: stoppedMaterials.Array.size
@@ -6895,3 +6963,4 @@ SceneRoots:
   - {fileID: 154638629}
   - {fileID: 1431172710}
   - {fileID: 717753709}
+  - {fileID: 918273646}

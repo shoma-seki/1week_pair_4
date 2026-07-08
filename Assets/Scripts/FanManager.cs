@@ -45,6 +45,24 @@ public class FanManager : MonoBehaviour
     public void AddFan()
     {
         FanCount++;
+        GameAudioManager.Instance?.PlayFanIncrease();
+        FanCountChanged?.Invoke(FanCount);
+    }
+
+    public void RemoveFan(int amount = 1)
+    {
+        if (amount <= 0 || FanCount <= 0)
+        {
+            return;
+        }
+
+        int nextFanCount = Mathf.Max(0, FanCount - amount);
+        if (nextFanCount == FanCount)
+        {
+            return;
+        }
+
+        FanCount = nextFanCount;
         FanCountChanged?.Invoke(FanCount);
     }
 
