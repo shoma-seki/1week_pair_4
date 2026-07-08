@@ -29,7 +29,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -102,9 +102,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b891ed74946e78a4aa675d5707204b1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LightController
-  fallSpeed: 5
-  groundY: 0
-  shakeDelay: 3
+  detectionDistance: 40
+  descentDistance: 40
+  descentSpeed: 50
   shakeTime: 2
-  shakeAmount: 0.1
+  shakeAmount: 0.5
+  shakeSpeed: 20
+  initialFallSpeed: 5
+  fallAcceleration: 20
+  groundY: 5
   firePrefab: {fileID: 7235873884660837787, guid: 0599124c12edb4c4d8c6a971ef1f0df1, type: 3}

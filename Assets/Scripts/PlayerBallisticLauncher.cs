@@ -25,6 +25,8 @@ public class PlayerBallisticLauncher : MonoBehaviour
     [SerializeField, Min(0f)] private float wobbleAmplitude = 0.035f;
     [SerializeField, Min(0f)] private float wobbleFrequency = 5f;
     [SerializeField, Min(0f)] private float wobbleSpeed = 7f;
+    [SerializeField, Range(0f, 1f)] private float secondStageWobbleMultiplier = 0.6f;
+    [SerializeField, Range(0f, 1f)] private float thirdStageWobbleMultiplier = 0.3f;
     [SerializeField, Min(0.01f)] private float disappearDuration = 0.35f;
     [SerializeField] private Color streamColor = new Color(1f, 0.82f, 0.12f, 0.9f);
 
@@ -188,7 +190,13 @@ public class PlayerBallisticLauncher : MonoBehaviour
 
         wasFiring = true;
         disappearProgress = 0f;
-        SetChildParticlesPlaying(true);
+
+        bool playThirdStageParticles = player.CurrentUrineStage == Player.UrineStage.Third;
+        if (playThirdStageParticles)
+        {
+            AimChildParticleSystemsAt(targetPosition);
+        }
+        SetChildParticlesPlaying(playThirdStageParticles);
 
         Vector3 startPosition = GetLaunchPosition();
         float stageArcHeight = GetCurrentArcHeight();
@@ -240,9 +248,21 @@ public class PlayerBallisticLauncher : MonoBehaviour
             float noise = Mathf.PerlinNoise(
                 normalizedTime * wobbleFrequency,
                 animationTime * wobbleSpeed) - 0.5f;
-            position += sideways * noise * 2f * wobbleAmplitude * strengthMultiplier * endpointMask;
+            position += sideways * noise * 2f * wobbleAmplitude * GetStageWobbleMultiplier() * endpointMask;
             renderer.SetPosition(i, position);
         }
+    }
+
+    private float GetStageWobbleMultiplier()
+    {
+        if (player == null) return 1f;
+
+        return player.CurrentUrineStage switch
+        {
+            Player.UrineStage.Third => thirdStageWobbleMultiplier,
+            Player.UrineStage.Second => secondStageWobbleMultiplier,
+            _ => 1f
+        };
     }
 
     private float GetStageMultiplier()
@@ -278,7 +298,23 @@ public class PlayerBallisticLauncher : MonoBehaviour
             }
             else if (particles.isPlaying)
             {
-                particles.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+                particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+        }
+    }
+
+    private void AimChildParticleSystemsAt(Vector3 targetPosition)
+    {
+        if (childParticleSystems == null) return;
+
+        foreach (ParticleSystem particles in childParticleSystems)
+        {
+            if (particles == null) continue;
+
+            Vector3 direction = targetPosition - particles.transform.position;
+            if (direction.sqrMagnitude > 0.0001f)
+            {
+                particles.transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
             }
         }
     }
