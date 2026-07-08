@@ -13,6 +13,9 @@ public class Obstacle : MonoBehaviour
     [SerializeField] private GameObject child;
     MeshRenderer meshRenderer;
 
+    [Header("Rotation")]
+    [SerializeField] private Vector3 rotationSpeed = new Vector3(0f, 0f, 0f);
+    //[SerializeField] private GameObject child;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -28,7 +31,7 @@ public class Obstacle : MonoBehaviour
         {
 
             transform.position += moveDirection * moveSpeed * Time.deltaTime;
-
+            child.transform.Rotate(rotationSpeed * Time.deltaTime);
         }
 
         //if (isShrinking)

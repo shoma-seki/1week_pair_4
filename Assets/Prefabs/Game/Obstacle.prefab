@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 4032015650964811912}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 2.6, z: 0}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -48,10 +48,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2e8f929990e21045a6f64a62d78eee9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Obstacle
-  moveSpeed: 20
+  moveSpeed: 25
   lifeTime: 4
   moveDirection: {x: -1, y: 0, z: 0}
   child: {fileID: 6093744560388203110}
+  rotationSpeed: {x: 0, y: 0, z: 360}
 --- !u!65 &6139518525598500985
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -130,8 +131,8 @@ Transform:
   m_GameObject: {fileID: 4883315521839310041}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -8.870836, y: 0.18, z: -3.9970016}
-  m_LocalScale: {x: 12.618793, y: 6.1158333, z: 2.8258333}
+  m_LocalPosition: {x: -8.870836, y: 2.913334, z: -3.3427}
+  m_LocalScale: {x: 12.618793, y: 6.1158333, z: 0.999328}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2182081695752801858}
@@ -280,8 +281,8 @@ Transform:
   m_GameObject: {fileID: 6093744560388203110}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
+  m_LocalPosition: {x: -1.49, y: 1.22, z: -0.6}
+  m_LocalScale: {x: 0.16277, y: 0.1, z: 0.20569001}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 2182081695752801858}
@@ -319,7 +320,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: fe9640c097026234da1d9d531b505409, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
