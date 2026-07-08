@@ -49,8 +49,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ce249af4b40a7245a5c7aab14c048a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Audience
-  fanPointPerSecond: 1
-  fanPointToBecomeFan: 1
+  fanPointPerSecond: 2
+  fanPointToBecomeFan: 0.1
   hitOffset: {x: 0, y: 3, z: 0}
   moveDuration: 0.3
   interpolationType: 2
