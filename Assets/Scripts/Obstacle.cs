@@ -4,11 +4,13 @@ public class Obstacle : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 8f;
     [SerializeField] private float lifeTime = 3f;
+    [SerializeField, Min(1)] private int fanDecreaseAmount = 1;
     [SerializeField] private Vector3 moveDirection = Vector3.left;Å@Å@//îÚÇ‘å¸Ç´
 
     private Vector3 startPosition;
     private bool isMoving = false;
     private bool isShrinking = false;
+    private bool hasHitPlayer = false;
 
     [SerializeField] private GameObject child;
     MeshRenderer meshRenderer;
@@ -62,12 +64,21 @@ public class Obstacle : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            //
-            //Debug.Log("Ç†ÇΩÇΩ");
+            if (!hasHitPlayer)
+            {
+                hasHitPlayer = true;
+                FanManager.Instance.RemoveFan(fanDecreaseAmount);
+            }
+
             Destroy(gameObject);
 
         }
 
+    }
+
+    private void OnValidate()
+    {
+        fanDecreaseAmount = Mathf.Max(1, fanDecreaseAmount);
     }
 
     //private void ReverseDirection()

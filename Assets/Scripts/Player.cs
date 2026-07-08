@@ -68,6 +68,8 @@ public class Player : MonoBehaviour
     private System.Random materialRandom;
     private Coroutine checkColliderImageCoroutine;
     private float[] checkColliderImageTargetAlphas;
+    private bool wasUrinating;
+    private UrineStage previousUrineStage;
 
     public float CurrentUrine => currentUrine;
     public float MaxUrine => maxUrine;
@@ -106,6 +108,7 @@ public class Player : MonoBehaviour
     private void Awake()
     {
         currentUrine = maxUrine;
+        previousUrineStage = CurrentUrineStage;
         materialRandom = new System.Random(Guid.NewGuid().GetHashCode());
 
         if (playerRenderer == null)
@@ -145,6 +148,7 @@ public class Player : MonoBehaviour
         UpdateDistanceTraveled();
         UpdateUrineResource();
         UpdateUrineStage();
+        UpdateUrineAudio();
         UpdateMaterialState();
 
         if (!isMoving)
@@ -199,6 +203,7 @@ public class Player : MonoBehaviour
         }
 
         checkColliderImageCoroutine = StartCoroutine(ShowCheckColliderImages());
+        GameAudioManager.Instance?.PlayObstacle();
         CheckColliderEntered?.Invoke();
     }
 
@@ -326,6 +331,35 @@ public class Player : MonoBehaviour
             movementMaterialIndex = 0;
             ShowMovementMaterial();
         }
+    }
+
+    private void UpdateUrineAudio()
+    {
+        bool isUrinating = Input.GetMouseButton(0) && CanUrinate;
+        UrineStage currentStage = CurrentUrineStage;
+
+        if (isUrinating)
+        {
+            if (wasUrinating && currentStage > previousUrineStage)
+            {
+                GameAudioManager.Instance?.PlayShobenUp();
+            }
+
+            GameAudioManager.Instance?.PlayUrineLoop(currentStage);
+        }
+        else if (wasUrinating)
+        {
+            GameAudioManager.Instance?.StopUrineLoop();
+        }
+
+        if (Input.GetMouseButtonUp(0))
+        {
+            GameAudioManager.Instance?.PlayPosing();
+            GameAudioManager.Instance?.PlayReload();
+        }
+
+        wasUrinating = isUrinating;
+        previousUrineStage = currentStage;
     }
 
     private void ShowRandomStoppedMaterial()
