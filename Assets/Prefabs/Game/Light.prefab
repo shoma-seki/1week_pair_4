@@ -102,7 +102,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b891ed74946e78a4aa675d5707204b1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LightController
-  detectionDistance: 40
+  detectionDistance: 30
   descentDistance: 40
   descentSpeed: 50
   shakeTime: 2
