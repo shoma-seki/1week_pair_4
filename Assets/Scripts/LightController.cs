@@ -3,73 +3,136 @@ using UnityEngine;
 
 public class LightController : MonoBehaviour
 {
-    [Header("電気関係")]
-    [SerializeField] private float fallSpeed = 5.0f;
-    [SerializeField] private float groundY = 0.0f;
-    [SerializeField] private float shakeDelay = 3f;
-    private bool isFalling = false;
-    private bool isShaking = false;
+    [Header("Player Detection")]
+    [SerializeField] private float detectionDistance = 8f;
+
+    [Header("Descent")]
+    [SerializeField] private float descentDistance = 2f;
+    [SerializeField] private float descentSpeed = 1.5f;
+
+    [Header("Shake")]
     [SerializeField] private float shakeTime = 2f;
     [SerializeField] private float shakeAmount = 0.1f;
+    [SerializeField] private float shakeSpeed = 20f;
 
-    [Header("火関連")]
+    [Header("Fall")]
+    [SerializeField] private float initialFallSpeed = 1f;
+    [SerializeField] private float fallAcceleration = 9.8f;
+    [SerializeField] private float groundY = 0f;
+
+    [Header("Fire")]
     [SerializeField] private FireCOntorol firePrefab;
 
-    void Start()
+    private Player player;
+    private bool sequenceStarted;
+    private bool isFalling;
+    private float currentFallSpeed;
+    private Renderer[] renderers;
+
+    private void Awake()
     {
-        StartCoroutine(WaitThenShakeAndFall());
+        renderers = GetComponentsInChildren<Renderer>(true);
+        SetVisible(false);
     }
 
-    void Update()
+    private void Start()
     {
-        // 落下
-        if (isFalling)
-        {
-            transform.position += Vector3.down * fallSpeed * Time.deltaTime;
+        player = FindFirstObjectByType<Player>();
+    }
 
-            if (transform.position.y <= groundY)
-            {
-                SpawnFire();
-            }
+    private void Update()
+    {
+        if (!sequenceStarted)
+        {
+            TryStartSequence();
+        }
+
+        if (!isFalling)
+        {
+            return;
+        }
+
+        currentFallSpeed += fallAcceleration * Time.deltaTime;
+        transform.position += Vector3.down * currentFallSpeed * Time.deltaTime;
+
+        if (transform.position.y <= groundY)
+        {
+            SpawnFire();
         }
     }
 
-    void SpawnFire()
+    private void TryStartSequence()
     {
-        Vector3 spawnPosition = transform.position;
-        spawnPosition.y += 4.5f;
-
-        Quaternion rotation = Quaternion.Euler(90f, 0f, 180f);
-        Instantiate(firePrefab, spawnPosition, rotation);
-        Destroy(gameObject);
-    }
-
-    private IEnumerator WaitThenShakeAndFall()
-    {
-        yield return new WaitForSeconds(shakeDelay);
-        yield return ShakeThenFall();
-    }
-
-    private IEnumerator ShakeThenFall()
-    {
-        isShaking = true;
-
-        Vector3 startPos = transform.position;
-        float timer = 0f;
-
-        while (timer < shakeTime)
+        if (player == null)
         {
-            timer += Time.deltaTime;
+            player = FindFirstObjectByType<Player>();
+            if (player == null)
+            {
+                return;
+            }
+        }
 
-            float x = Mathf.Sin(timer * 20f) * shakeAmount;
-            transform.position = startPos + new Vector3(x, 0, 0);
+        // The player advances along the Z axis. The light is intentionally placed
+        // far to the side on X, so a planar distance check can never become small.
+        float distanceAlongRunway = Mathf.Abs(transform.position.z - player.transform.position.z);
 
+        if (distanceAlongRunway <= detectionDistance)
+        {
+            sequenceStarted = true;
+            SetVisible(true);
+            StartCoroutine(DescendShakeAndFall());
+        }
+    }
+
+    private void SetVisible(bool isVisible)
+    {
+        foreach (Renderer targetRenderer in renderers)
+        {
+            targetRenderer.enabled = isVisible;
+        }
+    }
+
+    private IEnumerator DescendShakeAndFall()
+    {
+        Vector3 descentStart = transform.position;
+        Vector3 descentEnd = descentStart + Vector3.down * descentDistance;
+
+        while (Vector3.Distance(transform.position, descentEnd) > 0.001f)
+        {
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                descentEnd,
+                descentSpeed * Time.deltaTime);
             yield return null;
         }
 
-        transform.position = startPos;
-
-        isShaking = false;
+        transform.position = descentEnd;
+        yield return Shake();
+        currentFallSpeed = initialFallSpeed;
         isFalling = true;
+    }
+
+    private IEnumerator Shake()
+    {
+        Vector3 startPosition = transform.position;
+        float elapsed = 0f;
+
+        while (elapsed < shakeTime)
+        {
+            elapsed += Time.deltaTime;
+            float xOffset = Mathf.Sin(elapsed * shakeSpeed) * shakeAmount;
+            transform.position = startPosition + Vector3.right * xOffset;
+            yield return null;
+        }
+
+        transform.position = startPosition;
+    }
+
+    private void SpawnFire()
+    {
+        Vector3 spawnPosition = transform.position + Vector3.up * 4.5f;
+        Quaternion rotation = Quaternion.Euler(90f, 0f, 180f);
+        Instantiate(firePrefab, spawnPosition, rotation);
+        Destroy(gameObject);
     }
 }

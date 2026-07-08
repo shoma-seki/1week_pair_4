@@ -19,6 +19,7 @@ public class Player : MonoBehaviour
     [SerializeField, Min(0f)] private float thirdStageStrengthMultiplier = 2f;
     [SerializeField, Range(0f, 1f)] private float secondStageAimSpeedMultiplier = 0.5f;
     [SerializeField, Range(0f, 1f)] private float thirdStageAimSpeedMultiplier = 0.25f;
+    [SerializeField, Range(0.05f, 1f)] private float secondStageArcHeightMultiplier = 0.7f;
     [SerializeField, Range(0.05f, 1f)] private float thirdStageArcHeightMultiplier = 0.35f;
 
     [Header("Beat Movement")]
@@ -91,8 +92,12 @@ public class Player : MonoBehaviour
         UrineStage.Second => secondStageAimSpeedMultiplier,
         _ => 1f
     };
-    public float CurrentArcHeightMultiplier => Mathf.Lerp(1f, thirdStageArcHeightMultiplier,
-        Mathf.InverseLerp(0f, thirdStageTime, urineHoldDuration));
+    public float CurrentArcHeightMultiplier => CurrentUrineStage switch
+    {
+        UrineStage.Third => thirdStageArcHeightMultiplier,
+        UrineStage.Second => secondStageArcHeightMultiplier,
+        _ => 1f
+    };
 
     public event Action<float, float> UrineChanged;
     public event Action<float> DistanceChanged;
@@ -384,15 +389,7 @@ public class Player : MonoBehaviour
 
     public float GetChargeStrengthMultiplier()
     {
-        if (urineHoldDuration >= thirdStageTime) return thirdStageStrengthMultiplier;
-        if (urineHoldDuration >= secondStageTime)
-        {
-            return Mathf.Lerp(secondStageStrengthMultiplier, thirdStageStrengthMultiplier,
-                Mathf.InverseLerp(secondStageTime, thirdStageTime, urineHoldDuration));
-        }
-
-        return Mathf.Lerp(firstStageStrengthMultiplier, secondStageStrengthMultiplier,
-            Mathf.InverseLerp(0f, secondStageTime, urineHoldDuration));
+        return CurrentStageStrengthMultiplier;
     }
 
     private void OnValidate()
@@ -406,6 +403,7 @@ public class Player : MonoBehaviour
         thirdStageStrengthMultiplier = Mathf.Max(0f, thirdStageStrengthMultiplier);
         secondStageAimSpeedMultiplier = Mathf.Clamp01(secondStageAimSpeedMultiplier);
         thirdStageAimSpeedMultiplier = Mathf.Clamp01(thirdStageAimSpeedMultiplier);
+        secondStageArcHeightMultiplier = Mathf.Clamp(secondStageArcHeightMultiplier, 0.05f, 1f);
         thirdStageArcHeightMultiplier = Mathf.Clamp(thirdStageArcHeightMultiplier, 0.05f, 1f);
 
         if (Application.isPlaying && currentUrine > maxUrine)

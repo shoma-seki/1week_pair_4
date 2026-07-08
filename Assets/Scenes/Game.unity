@@ -491,7 +491,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2182081695752801858, guid: 499e399cf542683499891bed6fadf42c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2
+      value: 5.82
       objectReference: {fileID: 0}
     - target: {fileID: 2182081695752801858, guid: 499e399cf542683499891bed6fadf42c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2605,20 +2605,16 @@ PrefabInstance:
       value: Light
       objectReference: {fileID: 0}
     - target: {fileID: 3654403489966478457, guid: 18d2a4eb41f1b3f448caf5d4a5710cd0, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 3654403489966478457, guid: 18d2a4eb41f1b3f448caf5d4a5710cd0, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 32.87
+      value: 24.7
       objectReference: {fileID: 0}
     - target: {fileID: 3654403489966478457, guid: 18d2a4eb41f1b3f448caf5d4a5710cd0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 34.91
+      value: 49.7
       objectReference: {fileID: 0}
     - target: {fileID: 3654403489966478457, guid: 18d2a4eb41f1b3f448caf5d4a5710cd0, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 57.7
+      value: 88.67
       objectReference: {fileID: 0}
     - target: {fileID: 3654403489966478457, guid: 18d2a4eb41f1b3f448caf5d4a5710cd0, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2648,10 +2644,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4714389977107444092, guid: 18d2a4eb41f1b3f448caf5d4a5710cd0, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: cba9ae271e2116a47b02ca6605072312, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3610,7 +3602,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   player: {fileID: 0}
-  clearDistance: 50
+  clearDistance: 100
   clearSceneName: Result
   onGameCleared:
     m_PersistentCalls:
@@ -4490,6 +4482,14 @@ PrefabInstance:
       propertyPath: streamColor.r
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1146937808978332402, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
+      propertyPath: thirdStageWobbleMultiplier
+      value: 0.095
+      objectReference: {fileID: 0}
+    - target: {fileID: 1146937808978332402, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
+      propertyPath: secondStageWobbleMultiplier
+      value: 0.35
+      objectReference: {fileID: 0}
     - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
       propertyPath: checkColliderSpawnPrefab
       value: 
@@ -4511,12 +4511,24 @@ PrefabInstance:
       value: 0.018
       objectReference: {fileID: 0}
     - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
+      propertyPath: thirdStageStrengthMultiplier
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
       propertyPath: secondStageAimSpeedMultiplier
       value: 0.182
       objectReference: {fileID: 0}
     - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
+      propertyPath: secondStageStrengthMultiplier
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
       propertyPath: thirdStageArcHeightMultiplier
       value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
+      propertyPath: secondStageArcHeightMultiplier
+      value: 0.218
       objectReference: {fileID: 0}
     - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
       propertyPath: 'stoppedMaterials.Array.data[1]'
