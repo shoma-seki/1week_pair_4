@@ -1,5 +1,8 @@
 using UnityEngine;
+using Unity.Cinemachine;
 
+[DefaultExecutionOrder(1000)]
+[RequireComponent(typeof(Camera))]
 public class CameraFollow : MonoBehaviour
 {
     [SerializeField] private Transform player;
@@ -18,6 +21,12 @@ public class CameraFollow : MonoBehaviour
     [SerializeField, Min(0f)] private float checkColliderHoldDuration = 0.25f;
     [SerializeField, Min(0.01f)] private float checkColliderReturnDuration = 0.8f;
 
+    [Header("Urine Stage Camera Shake")]
+    [SerializeField, Min(0f)] private float stageChangeShakeAmplitude = 1f;
+    [SerializeField, Min(0.01f)] private float stageChangeShakeDuration = 0.25f;
+    [SerializeField, Min(0f)] private float thirdStageContinuousShakeAmplitude = 0.35f;
+    [SerializeField, Min(0.01f)] private float shakeFrequency = 2f;
+
     private Vector3 offset;
     private Player playerComponent;
     private bool isPlayingStopEffect;
@@ -26,6 +35,20 @@ public class CameraFollow : MonoBehaviour
     private float currentZoomInDuration;
     private float currentHoldDuration;
     private float currentReturnDuration;
+    private CinemachineBrain cinemachineBrain;
+    private CinemachineCamera shakeCamera;
+    private CinemachineBasicMultiChannelPerlin shakeNoise;
+    private NoiseSettings runtimeNoiseProfile;
+    private GameObject shakeCameraObject;
+    private Quaternion baseCameraRotation;
+    private Player.UrineStage previousUrineStage;
+    private float stageChangeShakeElapsed = float.PositiveInfinity;
+    private bool addedCinemachineBrain;
+
+    private void Awake()
+    {
+        SetupCinemachineShake();
+    }
 
     private void Start()
     {
@@ -48,7 +71,10 @@ public class CameraFollow : MonoBehaviour
         if (playerComponent != null)
         {
             playerComponent.CheckColliderEntered += PlayCheckColliderZoomEffect;
+            previousUrineStage = playerComponent.CurrentUrineStage;
         }
+
+        baseCameraRotation = transform.rotation;
 
         if (player != null)
         {
@@ -70,6 +96,10 @@ public class CameraFollow : MonoBehaviour
         {
             playerComponent.CheckColliderEntered -= PlayCheckColliderZoomEffect;
         }
+
+        if (shakeCameraObject != null) Destroy(shakeCameraObject);
+        if (runtimeNoiseProfile != null) Destroy(runtimeNoiseProfile);
+        if (addedCinemachineBrain && cinemachineBrain != null) Destroy(cinemachineBrain);
     }
 
     private void PlayCheckColliderZoomEffect()
@@ -100,6 +130,83 @@ public class CameraFollow : MonoBehaviour
 
         float zoom = GetStopEffectZoom();
         transform.position = player.position + offset * (1f - zoom);
+        UpdateCinemachineShake();
+    }
+
+    private void SetupCinemachineShake()
+    {
+        cinemachineBrain = GetComponent<CinemachineBrain>();
+        if (cinemachineBrain == null)
+        {
+            cinemachineBrain = gameObject.AddComponent<CinemachineBrain>();
+            addedCinemachineBrain = true;
+        }
+        cinemachineBrain.UpdateMethod = CinemachineBrain.UpdateMethods.ManualUpdate;
+
+        shakeCameraObject = new GameObject("Urine Stage Cinemachine Camera");
+        shakeCamera = shakeCameraObject.AddComponent<CinemachineCamera>();
+        shakeNoise = shakeCameraObject.AddComponent<CinemachineBasicMultiChannelPerlin>();
+        shakeNoise.NoiseProfile = CreateRuntimeNoiseProfile();
+        shakeNoise.AmplitudeGain = 0f;
+        shakeNoise.FrequencyGain = shakeFrequency;
+
+        Camera outputCamera = GetComponent<Camera>();
+        shakeCamera.Lens = LensSettings.FromCamera(outputCamera);
+        shakeCameraObject.transform.SetPositionAndRotation(transform.position, transform.rotation);
+    }
+
+    private NoiseSettings CreateRuntimeNoiseProfile()
+    {
+        runtimeNoiseProfile = ScriptableObject.CreateInstance<NoiseSettings>();
+        runtimeNoiseProfile.name = "Runtime Urine Stage Camera Shake";
+        runtimeNoiseProfile.PositionNoise = new[]
+        {
+            new NoiseSettings.TransformNoiseParams
+            {
+                X = new NoiseSettings.NoiseParams { Frequency = 1f, Amplitude = 0.18f },
+                Y = new NoiseSettings.NoiseParams { Frequency = 1.17f, Amplitude = 0.18f },
+                Z = new NoiseSettings.NoiseParams { Frequency = 0.83f, Amplitude = 0.05f }
+            }
+        };
+        runtimeNoiseProfile.OrientationNoise = new[]
+        {
+            new NoiseSettings.TransformNoiseParams
+            {
+                X = new NoiseSettings.NoiseParams { Frequency = 0.91f, Amplitude = 0.8f },
+                Y = new NoiseSettings.NoiseParams { Frequency = 1.13f, Amplitude = 0.8f },
+                Z = new NoiseSettings.NoiseParams { Frequency = 1.27f, Amplitude = 1.2f }
+            }
+        };
+        return runtimeNoiseProfile;
+    }
+
+    private void UpdateCinemachineShake()
+    {
+        if (cinemachineBrain == null || shakeCamera == null || shakeNoise == null) return;
+
+        if (playerComponent != null)
+        {
+            Player.UrineStage currentStage = playerComponent.CurrentUrineStage;
+            if (currentStage > previousUrineStage)
+            {
+                stageChangeShakeElapsed = 0f;
+                shakeNoise.ReSeed();
+            }
+            previousUrineStage = currentStage;
+
+            stageChangeShakeElapsed += Time.deltaTime;
+            float transitionProgress = Mathf.Clamp01(stageChangeShakeElapsed / stageChangeShakeDuration);
+            float transitionShake = stageChangeShakeAmplitude * (1f - transitionProgress) * (1f - transitionProgress);
+            float continuousShake = currentStage == Player.UrineStage.Third
+                ? thirdStageContinuousShakeAmplitude
+                : 0f;
+            shakeNoise.AmplitudeGain = transitionShake + continuousShake;
+            shakeNoise.FrequencyGain = shakeFrequency;
+        }
+
+        transform.rotation = baseCameraRotation;
+        shakeCameraObject.transform.SetPositionAndRotation(transform.position, baseCameraRotation);
+        cinemachineBrain.ManualUpdate();
     }
 
     private float GetStopEffectZoom()
