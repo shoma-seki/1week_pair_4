@@ -948,8 +948,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 27, y: 37}
-  m_SizeDelta: {x: 351.9891, y: 50}
+  m_AnchoredPosition: {x: 522.6197, y: 60.6}
+  m_SizeDelta: {x: 757.8286, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &641445853
 MonoBehaviour:
@@ -980,8 +980,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281414051
-  m_fontColor: {r: 0.6377357, g: 0.19132064, b: 0.19132064, a: 1}
+    rgba: 4285341378
+  m_fontColor: {r: 0.7607844, g: 0.11764707, b: 0.427451, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -998,8 +998,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 40
-  m_fontSizeBase: 40
+  m_fontSize: 59.59
+  m_fontSizeBase: 59.59
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2881,6 +2881,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1578881280}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &928374650
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 928374651}
+  - component: {fileID: 928374652}
+  m_Layer: 0
+  m_Name: GameAudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &928374651
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 928374650}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &928374652
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 928374650}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72f3d6b7a31c4d76aa2e23e9700db003, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameAudioManager
+  shobenClip: {fileID: 8300000, guid: ddc91e4a1df879747b5aaf483bfc8f17, type: 3}
+  powerShobenClip: {fileID: 8300000, guid: a15d3532a49635e43a8bb92b9978804c, type: 3}
+  shobenUpClip: {fileID: 8300000, guid: 8458c3d2bfe4e1948accb252fe12e6d4, type: 3}
+  reloadClip: {fileID: 8300000, guid: fca9ebcd7b8815f4ca6a680c56f08066, type: 3}
+  posingClip: {fileID: 8300000, guid: 67241dbba457c764bb40035f1e151a43, type: 3}
+  obstacleClip: {fileID: 8300000, guid: 1b11d15c7b88f224d8f298a957931f9b, type: 3}
+  fanIncreaseClip: {fileID: 8300000, guid: 3283109fdc1c3d64fab8460ca5c4e76c, type: 3}
+  loopVolume: 1
+  oneShotVolume: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2906,3 +2959,4 @@ SceneRoots:
   - {fileID: 1578881280}
   - {fileID: 1012681501}
   - {fileID: 530036612}
+  - {fileID: 928374651}
