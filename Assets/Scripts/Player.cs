@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
@@ -40,6 +42,14 @@ public class Player : MonoBehaviour
     private GameObject checkColliderSpawnPrefab;
     [SerializeField, Tooltip("触れたCheckColliderの位置から加算するオフセット")]
     private Vector3 checkColliderSpawnOffset;
+    [SerializeField, Tooltip("接触時に一時的に表示する2つのUI Image")]
+    private Image[] checkColliderImages = new Image[2];
+    [SerializeField, Min(0.01f), Tooltip("Imageが現れるまでの時間（秒）")]
+    private float checkColliderImageFadeInDuration = 0.15f;
+    [SerializeField, Min(0f), Tooltip("Imageの表示を維持する時間（秒）")]
+    private float checkColliderImageDuration = 1f;
+    [SerializeField, Min(0.01f), Tooltip("Imageが消えるまでの時間（秒）")]
+    private float checkColliderImageFadeOutDuration = 0.35f;
 
     private MusicManager musicManager;
     private Vector3 moveStart;
@@ -54,6 +64,8 @@ public class Player : MonoBehaviour
     private bool canMove = true;
     private float urineHoldDuration;
     private int movementMaterialIndex;
+    private Coroutine checkColliderImageCoroutine;
+    private float[] checkColliderImageTargetAlphas;
 
     public float CurrentUrine => currentUrine;
     public float MaxUrine => maxUrine;
@@ -83,6 +95,7 @@ public class Player : MonoBehaviour
 
     public event Action<float, float> UrineChanged;
     public event Action<float> DistanceChanged;
+    public event Action CheckColliderEntered;
 
     private void Awake()
     {
@@ -92,6 +105,9 @@ public class Player : MonoBehaviour
         {
             playerRenderer = GetComponentInChildren<Renderer>();
         }
+
+        CacheCheckColliderImageAlphas();
+        SetCheckColliderImagesEnabled(false);
     }
 
     private void Start()
@@ -157,15 +173,104 @@ public class Player : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("CheckCollider") || checkColliderSpawnPrefab == null)
+        if (!other.CompareTag("CheckCollider"))
         {
             return;
         }
 
-        Instantiate(
-            checkColliderSpawnPrefab,
-            other.transform.position + checkColliderSpawnOffset,
-            other.transform.rotation);
+        if (checkColliderSpawnPrefab != null)
+        {
+            Instantiate(
+                checkColliderSpawnPrefab,
+                other.transform.position + checkColliderSpawnOffset,
+                other.transform.rotation);
+        }
+
+        if (checkColliderImageCoroutine != null)
+        {
+            StopCoroutine(checkColliderImageCoroutine);
+        }
+
+        checkColliderImageCoroutine = StartCoroutine(ShowCheckColliderImages());
+        CheckColliderEntered?.Invoke();
+    }
+
+    private IEnumerator ShowCheckColliderImages()
+    {
+        SetCheckColliderImagesAlpha(0f);
+        SetCheckColliderImagesEnabled(true);
+        yield return AnimateCheckColliderImageAlpha(0f, 1f, checkColliderImageFadeInDuration);
+        yield return new WaitForSeconds(checkColliderImageDuration);
+        yield return AnimateCheckColliderImageAlpha(1f, 0f, checkColliderImageFadeOutDuration);
+        SetCheckColliderImagesEnabled(false);
+        checkColliderImageCoroutine = null;
+    }
+
+    private IEnumerator AnimateCheckColliderImageAlpha(float from, float to, float duration)
+    {
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
+            SetCheckColliderImagesAlpha(Mathf.Lerp(from, to, progress));
+            yield return null;
+        }
+
+        SetCheckColliderImagesAlpha(to);
+    }
+
+    private void CacheCheckColliderImageAlphas()
+    {
+        checkColliderImageTargetAlphas = new float[checkColliderImages?.Length ?? 0];
+
+        for (int i = 0; i < checkColliderImageTargetAlphas.Length; i++)
+        {
+            checkColliderImageTargetAlphas[i] = checkColliderImages[i] != null
+                ? checkColliderImages[i].color.a
+                : 1f;
+        }
+    }
+
+    private void SetCheckColliderImagesAlpha(float normalizedAlpha)
+    {
+        if (checkColliderImages == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < checkColliderImages.Length; i++)
+        {
+            Image image = checkColliderImages[i];
+            if (image == null)
+            {
+                continue;
+            }
+
+            Color color = image.color;
+            float targetAlpha = i < checkColliderImageTargetAlphas.Length
+                ? checkColliderImageTargetAlphas[i]
+                : 1f;
+            color.a = targetAlpha * normalizedAlpha;
+            image.color = color;
+        }
+    }
+
+    private void SetCheckColliderImagesEnabled(bool isEnabled)
+    {
+        if (checkColliderImages == null)
+        {
+            return;
+        }
+
+        foreach (Image image in checkColliderImages)
+        {
+            if (image != null)
+            {
+                image.enabled = isEnabled;
+            }
+        }
     }
 
     private void UpdateDistanceTraveled()

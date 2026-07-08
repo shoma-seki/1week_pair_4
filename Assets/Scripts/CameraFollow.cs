@@ -12,9 +12,20 @@ public class CameraFollow : MonoBehaviour
     [SerializeField, Min(0.01f)] private float returnDuration = 1.2f;
     [SerializeField] private InterpolationType returnInterpolationType = InterpolationType.SmoothStep;
 
+    [Header("Check Collider Camera Effect")]
+    [SerializeField, Range(0f, 1f)] private float checkColliderZoomInAmount = 0.35f;
+    [SerializeField, Min(0.01f)] private float checkColliderZoomInDuration = 0.1f;
+    [SerializeField, Min(0f)] private float checkColliderHoldDuration = 0.25f;
+    [SerializeField, Min(0.01f)] private float checkColliderReturnDuration = 0.8f;
+
     private Vector3 offset;
+    private Player playerComponent;
     private bool isPlayingStopEffect;
     private float effectElapsed;
+    private float currentZoomInAmount;
+    private float currentZoomInDuration;
+    private float currentHoldDuration;
+    private float currentReturnDuration;
 
     private void Start()
     {
@@ -24,8 +35,19 @@ public class CameraFollow : MonoBehaviour
 
             if (targetPlayer != null)
             {
+                playerComponent = targetPlayer;
                 player = targetPlayer.transform;
             }
+        }
+
+        if (playerComponent == null && player != null)
+        {
+            playerComponent = player.GetComponentInParent<Player>();
+        }
+
+        if (playerComponent != null)
+        {
+            playerComponent.CheckColliderEntered += PlayCheckColliderZoomEffect;
         }
 
         if (player != null)
@@ -38,9 +60,35 @@ public class CameraFollow : MonoBehaviour
     {
         if (Input.GetMouseButtonUp(0))
         {
-            isPlayingStopEffect = true;
-            effectElapsed = 0f;
+            PlayZoomEffect(zoomInAmount, zoomInDuration, holdDuration, returnDuration);
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (playerComponent != null)
+        {
+            playerComponent.CheckColliderEntered -= PlayCheckColliderZoomEffect;
+        }
+    }
+
+    private void PlayCheckColliderZoomEffect()
+    {
+        PlayZoomEffect(
+            checkColliderZoomInAmount,
+            checkColliderZoomInDuration,
+            checkColliderHoldDuration,
+            checkColliderReturnDuration);
+    }
+
+    private void PlayZoomEffect(float amount, float zoomDuration, float effectHoldDuration, float effectReturnDuration)
+    {
+        currentZoomInAmount = amount;
+        currentZoomInDuration = zoomDuration;
+        currentHoldDuration = effectHoldDuration;
+        currentReturnDuration = effectReturnDuration;
+        isPlayingStopEffect = true;
+        effectElapsed = 0f;
     }
 
     private void LateUpdate()
@@ -63,24 +111,24 @@ public class CameraFollow : MonoBehaviour
 
         effectElapsed += Time.deltaTime;
 
-        if (effectElapsed < zoomInDuration)
+        if (effectElapsed < currentZoomInDuration)
         {
-            float progress = effectElapsed / zoomInDuration;
+            float progress = effectElapsed / currentZoomInDuration;
             return InterpolationUtility.Interpolate(
                 0f,
-                zoomInAmount,
+                currentZoomInAmount,
                 progress,
                 zoomInInterpolationType
             );
         }
 
-        float holdElapsed = effectElapsed - zoomInDuration;
-        if (holdElapsed < holdDuration)
+        float holdElapsed = effectElapsed - currentZoomInDuration;
+        if (holdElapsed < currentHoldDuration)
         {
-            return zoomInAmount;
+            return currentZoomInAmount;
         }
 
-        float returnProgress = (holdElapsed - holdDuration) / returnDuration;
+        float returnProgress = (holdElapsed - currentHoldDuration) / currentReturnDuration;
         if (returnProgress >= 1f)
         {
             isPlayingStopEffect = false;
@@ -88,7 +136,7 @@ public class CameraFollow : MonoBehaviour
         }
 
         return InterpolationUtility.Interpolate(
-            zoomInAmount,
+            currentZoomInAmount,
             0f,
             returnProgress,
             returnInterpolationType
