@@ -6,6 +6,7 @@ public class GameManager : MonoBehaviour
     [Header("Game Clear")]
     [SerializeField] private Player player;
     [SerializeField, Min(0.01f)] private float clearDistance = 100f;
+    [SerializeField] private string clearSceneName = "Result";
     [SerializeField] private UnityEvent onGameCleared;
 
     private SceneChange scene;
@@ -55,6 +56,15 @@ public class GameManager : MonoBehaviour
         player.StopMovement();
         onGameCleared?.Invoke();
         Debug.Log($"Game Clear! Distance: {distance:F1}", this);
+
+        if (scene != null)
+        {
+            scene.LoadScene(clearSceneName);
+        }
+        else
+        {
+            Debug.LogError("SceneChange was not found. Cannot load the clear scene.", this);
+        }
     }
 
     private void OnValidate()
