@@ -712,11 +712,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c31e6199246e4e24bad755f99e8289f3, type: 3}
---- !u!64 &229423935 stripped
-MeshCollider:
-  m_CorrespondingSourceObject: {fileID: 352349713916279811, guid: c31e6199246e4e24bad755f99e8289f3, type: 3}
-  m_PrefabInstance: {fileID: 229423934}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &241481081
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1628,7 +1623,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b80ddf0d311a7ac4297dafd5e62357a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraRaycaster
-  planeCollider: {fileID: 229423935}
   maxDistance: 1000
   player: {fileID: 0}
 --- !u!114 &330585549
