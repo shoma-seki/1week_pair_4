@@ -1,4 +1,4 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 
 public class Door : MonoBehaviour
 {
@@ -14,6 +14,18 @@ public class Door : MonoBehaviour
     private Vector3 rightOpenPos;
 
     private bool isOpening = false;
+
+    private void Awake()
+    {
+        foreach (Collider childCollider in GetComponentsInChildren<Collider>(true))
+        {
+            if (childCollider.transform == transform)
+                continue;
+
+            if (childCollider.TryGetComponent(out DoorTrigger trigger))
+                trigger.Initialize(this);
+        }
+    }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -45,13 +57,21 @@ public class Door : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("Door Hit : " + other.name);
+        TryOpen(other);
+    }
 
-        if (!other.CompareTag("Shoben"))
+    private void OnCollisionEnter(Collision collision)
+    {
+        TryOpen(collision.collider);
+    }
+
+    public void TryOpen(Collider other)
+    {
+        if (other == null || !other.CompareTag("Shoben"))
             return;
 
-        Debug.Log("è¨ï÷Ç™ìñÇΩÇËÇ‹ÇµÇΩ");
-
         isOpening = true;
+        Debug.Log("Â∞è‰æø„ÅåÂΩì„Åü„Çä„ÄÅ„Éâ„Ç¢„ÇíÈñã„Åç„Åæ„Åô", this);
     }
 }
+
