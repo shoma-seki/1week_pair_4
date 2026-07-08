@@ -4497,7 +4497,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
       propertyPath: stoppedMaterials.Array.size
-      value: 1
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
       propertyPath: thirdStageAimSpeedMultiplier
@@ -4511,6 +4511,18 @@ PrefabInstance:
       propertyPath: thirdStageArcHeightMultiplier
       value: 0.05
       objectReference: {fileID: 0}
+    - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
+      propertyPath: 'stoppedMaterials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: d4895c6b05e92be4585b7f9f47cf62e6, type: 2}
+    - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
+      propertyPath: 'stoppedMaterials.Array.data[2]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 06f8cb8344fa7e44d9ce97d075a7c11b, type: 2}
+    - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
+      propertyPath: 'stoppedMaterials.Array.data[3]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f00ceb5e16d45d14fa0cf95d62dd0f4f, type: 2}
     - target: {fileID: 3377934550982711814, guid: 9fbfefe3d9007a548bc47f6de7873d10, type: 3}
       propertyPath: checkColliderImageFadeInDuration
       value: 0.1

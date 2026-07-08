@@ -64,6 +64,7 @@ public class Player : MonoBehaviour
     private bool canMove = true;
     private float urineHoldDuration;
     private int movementMaterialIndex;
+    private System.Random materialRandom;
     private Coroutine checkColliderImageCoroutine;
     private float[] checkColliderImageTargetAlphas;
 
@@ -100,6 +101,7 @@ public class Player : MonoBehaviour
     private void Awake()
     {
         currentUrine = maxUrine;
+        materialRandom = new System.Random(Guid.NewGuid().GetHashCode());
 
         if (playerRenderer == null)
         {
@@ -328,15 +330,41 @@ public class Player : MonoBehaviour
             return;
         }
 
-        int startIndex = UnityEngine.Random.Range(0, stoppedMaterials.Length);
-        for (int offset = 0; offset < stoppedMaterials.Length; offset++)
+        Material currentMaterial = playerRenderer.sharedMaterial;
+        int candidateCount = 0;
+
+        for (int index = 0; index < stoppedMaterials.Length; index++)
         {
-            Material material = stoppedMaterials[(startIndex + offset) % stoppedMaterials.Length];
-            if (material != null)
+            Material material = stoppedMaterials[index];
+            if (material != null && material != currentMaterial)
+            {
+                candidateCount++;
+            }
+        }
+
+        if (candidateCount == 0)
+        {
+            return;
+        }
+
+        int randomValue = materialRandom.Next(int.MaxValue);
+        int selectedCandidate = randomValue % candidateCount;
+
+        for (int index = 0; index < stoppedMaterials.Length; index++)
+        {
+            Material material = stoppedMaterials[index];
+            if (material == null || material == currentMaterial)
+            {
+                continue;
+            }
+
+            if (selectedCandidate == 0)
             {
                 playerRenderer.sharedMaterial = material;
                 return;
             }
+
+            selectedCandidate--;
         }
     }
 

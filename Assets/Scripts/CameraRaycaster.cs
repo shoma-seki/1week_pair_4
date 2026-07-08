@@ -3,7 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class CameraRaycaster : MonoBehaviour
 {
-    [SerializeField] private Collider planeCollider;
+    private const string PlaneTag = "Plane";
+
     [SerializeField] private float maxDistance = 1000f;
 
     [Header("Aim Speed By Urine Stage")]
@@ -44,20 +45,24 @@ public class CameraRaycaster : MonoBehaviour
     {
         hitPoint = default;
 
-        if (planeCollider == null)
-        {
-            return false;
-        }
-
         Ray ray = targetCamera.ScreenPointToRay(AimScreenPosition);
+        RaycastHit[] hits = Physics.RaycastAll(ray, maxDistance);
+        float nearestDistance = float.PositiveInfinity;
+        bool foundPlane = false;
 
-        if (!planeCollider.Raycast(ray, out RaycastHit hit, maxDistance))
+        foreach (RaycastHit hit in hits)
         {
-            return false;
+            if (!hit.collider.CompareTag(PlaneTag) || hit.distance >= nearestDistance)
+            {
+                continue;
+            }
+
+            nearestDistance = hit.distance;
+            hitPoint = hit.point;
+            foundPlane = true;
         }
 
-        hitPoint = hit.point;
-        return true;
+        return foundPlane;
     }
 
     private void UpdateAimScreenPosition()
