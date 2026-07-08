@@ -3,6 +3,7 @@ using UnityEngine;
 public class DoorSceneChange : MonoBehaviour
 {
     [SerializeField] private SceneChange sceneChange;
+    [SerializeField] private string sceneName = "Game";
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -19,7 +20,15 @@ public class DoorSceneChange : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            sceneChange.LoadScene("Game");
+            SceneChange activeSceneChange = SceneChange.Instance != null ? SceneChange.Instance : sceneChange;
+
+            if (activeSceneChange == null)
+            {
+                Debug.LogError("SceneChange was not found. Cannot load the scene.", this);
+                return;
+            }
+
+            activeSceneChange.LoadScene(sceneName);
         }
     }
 }

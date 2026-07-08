@@ -1648,10 +1648,10 @@ MonoBehaviour:
   checkColliderZoomInDuration: 0.1
   checkColliderHoldDuration: 0.25
   checkColliderReturnDuration: 0.8
-  stageChangeShakeAmplitude: 1
+  stageChangeShakeAmplitude: 10
   stageChangeShakeDuration: 0.25
   thirdStageContinuousShakeAmplitude: 0.35
-  shakeFrequency: 2
+  shakeFrequency: 0.5
 --- !u!1 &338528002
 GameObject:
   m_ObjectHideFlags: 0

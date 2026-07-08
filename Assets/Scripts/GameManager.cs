@@ -15,7 +15,7 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        scene = FindAnyObjectByType<SceneChange>();
+        scene = SceneChange.Instance != null ? SceneChange.Instance : FindAnyObjectByType<SceneChange>();
 
         if (player == null)
         {
@@ -39,9 +39,11 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (player == null && Input.GetKeyDown(KeyCode.G) && scene != null)
+        SceneChange activeSceneChange = SceneChange.Instance != null ? SceneChange.Instance : scene;
+
+        if (player == null && Input.GetKeyDown(KeyCode.G) && activeSceneChange != null)
         {
-            scene.LoadScene("Game");
+            activeSceneChange.LoadScene("Game");
         }
     }
 
@@ -57,9 +59,11 @@ public class GameManager : MonoBehaviour
         onGameCleared?.Invoke();
         Debug.Log($"Game Clear! Distance: {distance:F1}", this);
 
-        if (scene != null)
+        SceneChange activeSceneChange = SceneChange.Instance != null ? SceneChange.Instance : scene;
+
+        if (activeSceneChange != null)
         {
-            scene.LoadScene(clearSceneName);
+            activeSceneChange.LoadScene(clearSceneName);
         }
         else
         {
