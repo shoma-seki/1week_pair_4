@@ -525,9 +525,29 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3891291816266129911, guid: 499e399cf542683499891bed6fadf42c, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 8.477157
+      objectReference: {fileID: 0}
+    - target: {fileID: 3891291816266129911, guid: 499e399cf542683499891bed6fadf42c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 4.0893
+      objectReference: {fileID: 0}
     - target: {fileID: 4032015650964811912, guid: 499e399cf542683499891bed6fadf42c, type: 3}
       propertyPath: m_Name
       value: Obstacle
+      objectReference: {fileID: 0}
+    - target: {fileID: 5033595664183752508, guid: 499e399cf542683499891bed6fadf42c, type: 3}
+      propertyPath: rotationSpeed.x
+      value: 360
+      objectReference: {fileID: 0}
+    - target: {fileID: 5033595664183752508, guid: 499e399cf542683499891bed6fadf42c, type: 3}
+      propertyPath: rotationSpeed.y
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 5033595664183752508, guid: 499e399cf542683499891bed6fadf42c, type: 3}
+      propertyPath: rotationSpeed.z
+      value: 90
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
