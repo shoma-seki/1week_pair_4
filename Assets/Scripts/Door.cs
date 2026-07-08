@@ -21,12 +21,36 @@ public class Door : MonoBehaviour
         leftClosedPos = leftDoor.localPosition;
         rightClosedPos = rightDoor.localPosition;
 
-        //leftOpenPos=leftClosedPos+Vector3
+        leftOpenPos = leftClosedPos + Vector3.left * slideDistance;
+        rightOpenPos = rightClosedPos + Vector3.right * slideDistance;
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if (!isOpening)
+            return;
+
+        leftDoor.localPosition = Vector3.MoveTowards(
+            leftDoor.localPosition,
+            leftOpenPos,
+            slideSpeed * Time.deltaTime);
+
+        rightDoor.localPosition = Vector3.MoveTowards(
+            rightDoor.localPosition,
+            rightOpenPos,
+            slideSpeed * Time.deltaTime);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        Debug.Log("Door Hit : " + other.name);
+
+        if (!other.CompareTag("Shoben"))
+            return;
+
+        Debug.Log("è¨ï÷Ç™ìñÇΩÇËÇ‹ÇµÇΩ");
+
+        isOpening = true;
     }
 }
