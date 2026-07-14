@@ -23,7 +23,7 @@ public class Fire : MonoBehaviour
     void Start()
     {
         if (meshRenderer == null)
-            meshRenderer = GetComponent<MeshRenderer>();
+            meshRenderer = GetComponentInChildren<MeshRenderer>();
 
         meshRenderer.enabled = false;
 
@@ -31,7 +31,7 @@ public class Fire : MonoBehaviour
 
         startPosition = transform.position;
 
-        Destroy(gameObject, lifeTime);
+        //Destroy(gameObject, lifeTime);
     }
 
     // Update is called once per frame

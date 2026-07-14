@@ -257,7 +257,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Fire
   lifeTime: 15
-  extinguishTime: 1
+  extinguishTime: 2
   growSpeed: 1
   maxScale: 2
   meshRenderer: {fileID: 9192394289473903750}
