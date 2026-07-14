@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -8,6 +9,7 @@ public class GameManager : MonoBehaviour
     [SerializeField, Min(0.01f)] private float clearDistance = 100f;
     [SerializeField] private string clearSceneName = "Result";
     [SerializeField] private UnityEvent onGameCleared;
+    [SerializeField, Min(0f)] private float clearPresentationDuration = 1.6f;
 
     private SceneChange scene;
 
@@ -59,8 +61,26 @@ public class GameManager : MonoBehaviour
         onGameCleared?.Invoke();
         Debug.Log($"Game Clear! Distance: {distance:F1}", this);
 
-        SceneChange activeSceneChange = SceneChange.Instance != null ? SceneChange.Instance : scene;
+        StartCoroutine(PlayClearAndLoadResult());
+    }
 
+    private IEnumerator PlayClearAndLoadResult()
+    {
+        GameAudioManager.Instance?.StopUrineLoop();
+        player.PlayClearCelebration(clearPresentationDuration);
+        PresentationDirector director = PresentationDirector.Instance;
+        if (director != null)
+        {
+            director.ShowBanner("CLEAR!", new Color(1f, 0.82f, 0.18f), clearPresentationDuration);
+            director.Flash(new Color(1f, 0.78f, 0.2f, 0.4f), 0.8f);
+            director.SpawnBurst(player.transform.position + Vector3.up * 2f, new Color(1f, 0.55f, 0.2f), 55, 0.8f);
+            director.ShakeCamera(0.22f, 0.55f);
+            director.PlayTone(1046.5f, 0.35f, 0.24f);
+        }
+
+        yield return new WaitForSeconds(clearPresentationDuration);
+
+        SceneChange activeSceneChange = SceneChange.Instance != null ? SceneChange.Instance : scene;
         if (activeSceneChange != null)
         {
             activeSceneChange.LoadScene(clearSceneName);
@@ -74,5 +94,6 @@ public class GameManager : MonoBehaviour
     private void OnValidate()
     {
         clearDistance = Mathf.Max(0.01f, clearDistance);
+        clearPresentationDuration = Mathf.Max(0f, clearPresentationDuration);
     }
 }

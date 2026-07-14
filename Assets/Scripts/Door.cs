@@ -14,6 +14,7 @@ public class Door : MonoBehaviour
     private Vector3 rightOpenPos;
 
     private bool isOpening = false;
+    private bool openingEffectPlayed;
 
     private void Awake()
     {
@@ -71,6 +72,19 @@ public class Door : MonoBehaviour
             return;
 
         isOpening = true;
+        if (!openingEffectPlayed)
+        {
+            openingEffectPlayed = true;
+            PresentationDirector director = PresentationDirector.Instance;
+            if (director != null)
+            {
+                director.ShowBanner("OPEN!", new Color(0.35f, 0.9f, 1f), 0.7f);
+                director.Flash(new Color(0.3f, 0.8f, 1f, 0.22f), 0.45f);
+                director.SpawnBurst(transform.position + Vector3.up * 2f, new Color(0.3f, 0.85f, 1f), 30, 0.45f);
+                director.PlayTone(740f, 0.24f, 0.2f);
+                director.ShakeCamera(0.08f, 0.3f);
+            }
+        }
         Debug.Log("小便が当たり、ドアを開きます", this);
     }
 }

@@ -73,6 +73,31 @@ public class GameAudioManager : MonoBehaviour
     public void PlayPosing() => PlayOneShot(posingClip);
     public void PlayObstacle() => PlayOneShot(obstacleClip);
     public void PlayFanIncrease() => PlayOneShot(fanIncreaseClip);
+    public void PlayFanDecrease()
+    {
+        if (obstacleClip != null)
+        {
+            StartCoroutine(PlayPitchedOneShot(obstacleClip, 0.68f));
+        }
+        else
+        {
+            PresentationDirector.Instance?.PlayTone(130f, 0.22f, 0.2f);
+        }
+    }
+
+    private System.Collections.IEnumerator PlayPitchedOneShot(AudioClip clip, float pitch)
+    {
+        GameObject sourceObject = new GameObject("Temporary Pitched One Shot");
+        sourceObject.transform.SetParent(transform, false);
+        AudioSource source = sourceObject.AddComponent<AudioSource>();
+        source.playOnAwake = false;
+        source.pitch = pitch;
+        source.volume = oneShotVolume;
+        source.clip = clip;
+        source.Play();
+        yield return new WaitForSeconds(clip.length / Mathf.Max(0.01f, pitch));
+        Destroy(sourceObject);
+    }
 
     private void PlayOneShot(AudioClip clip)
     {

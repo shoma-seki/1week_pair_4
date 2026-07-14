@@ -74,7 +74,7 @@ public class Player : MonoBehaviour
     public float CurrentUrine => currentUrine;
     public float MaxUrine => maxUrine;
     public float UrineNormalized => maxUrine > 0f ? currentUrine / maxUrine : 0f;
-    public bool CanUrinate => currentUrine > 0f;
+    public bool CanUrinate => canMove && currentUrine > 0f;
     public float DistanceTraveled => distanceTraveled;
     public bool CanMove => canMove;
     public bool IsMoving => isMoving;
@@ -182,6 +182,38 @@ public class Player : MonoBehaviour
         transform.localScale = originalScale;
     }
 
+    public void SetMovementEnabled(bool enabled)
+    {
+        canMove = enabled;
+        if (!enabled)
+        {
+            isMoving = false;
+            urineHoldDuration = 0f;
+            transform.localScale = originalScale == Vector3.zero ? transform.localScale : originalScale;
+            GameAudioManager.Instance?.StopUrineLoop();
+        }
+    }
+
+    public void PlayClearCelebration(float duration)
+    {
+        ShowRandomStoppedMaterial();
+        StartCoroutine(ClearCelebrationRoutine(duration));
+    }
+
+    private IEnumerator ClearCelebrationRoutine(float duration)
+    {
+        float elapsed = 0f;
+        Vector3 celebrationScale = originalScale == Vector3.zero ? transform.localScale : originalScale;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float pulse = Mathf.Sin(elapsed * Mathf.PI * 4f) * (1f - Mathf.Clamp01(elapsed / Mathf.Max(0.01f, duration)));
+            transform.localScale = celebrationScale * (1f + pulse * 0.12f);
+            yield return null;
+        }
+        transform.localScale = celebrationScale;
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("CheckCollider"))
@@ -204,6 +236,7 @@ public class Player : MonoBehaviour
 
         checkColliderImageCoroutine = StartCoroutine(ShowCheckColliderImages());
         GameAudioManager.Instance?.PlayObstacle();
+        PresentationDirector.Instance?.ShowWarning();
         CheckColliderEntered?.Invoke();
     }
 
@@ -300,7 +333,7 @@ public class Player : MonoBehaviour
 
     private void UpdateUrineResource()
     {
-        float nextUrine = Input.GetMouseButton(0)
+        float nextUrine = Input.GetMouseButton(0) && canMove
             ? Mathf.Max(0f, currentUrine - urineConsumptionPerSecond * Time.deltaTime)
             : maxUrine;
 

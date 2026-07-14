@@ -133,6 +133,14 @@ public class LightController : MonoBehaviour
         Vector3 spawnPosition = transform.position + Vector3.up * 4.5f;
         Quaternion rotation = Quaternion.Euler(90f, 0f, 180f);
         Instantiate(firePrefab, spawnPosition, rotation);
+        PresentationDirector director = PresentationDirector.Instance;
+        if (director != null)
+        {
+            director.SpawnBurst(new Vector3(transform.position.x, groundY, transform.position.z), new Color(1f, 0.32f, 0.08f), 48, 0.8f);
+            director.Flash(new Color(1f, 0.25f, 0.05f, 0.28f), 0.45f);
+            director.ShakeCamera(0.42f, 0.6f);
+            director.PlayTone(75f, 0.36f, 0.26f);
+        }
         Destroy(gameObject);
     }
 }

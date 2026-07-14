@@ -91,6 +91,7 @@ public class FanManager : MonoBehaviour
         }
 
         FanCount = nextFanCount;
+        GameAudioManager.Instance?.PlayFanDecrease();
         FanCountChanged?.Invoke(FanCount);
     }
 

@@ -56,6 +56,8 @@ public class ResultCameraMover : MonoBehaviour
 
         if (IsMoving)
         {
+            PresentationDirector.Instance?.Flash(new Color(1f, 0.8f, 0.25f, 0.2f), 0.3f);
+            PresentationDirector.Instance?.PlayTone(680f, 0.12f, 0.14f);
             SkipToEnd();
             return;
         }
@@ -67,6 +69,8 @@ public class ResultCameraMover : MonoBehaviour
                 FanManager.TryResetFanCount();
             }
 
+            PresentationDirector.Instance?.ShowBanner("THANK YOU!", new Color(1f, 0.75f, 0.28f), 0.65f);
+            PresentationDirector.Instance?.PlayTone(920f, 0.18f, 0.15f);
             SceneChange.Instance.LoadScene(titleSceneName);
         }
     }
@@ -86,6 +90,8 @@ public class ResultCameraMover : MonoBehaviour
         {
             controller.TurnOnAll();
         }
+
+        PresentationDirector.Instance?.SpawnBurst(transform.position + transform.forward * 8f, new Color(1f, 0.68f, 0.18f), 44, 0.7f);
     }
 
     [ContextMenu("Play")]
