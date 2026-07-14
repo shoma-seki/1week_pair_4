@@ -41,6 +41,8 @@ public class Audience : MonoBehaviour
     private bool isTouchingFire;
     [SerializeField] private float fireDecreasePerSecond = 1f;
 
+    [SerializeField] private GameObject urineAreaPrefab;　//小便エリア
+    private GameObject currentArea;
     public bool IsTouchingPlaneHitFollower { get; private set; }
     public float FanPoint { get; private set; }
     public bool IsFan { get; private set; }
@@ -57,7 +59,7 @@ public class Audience : MonoBehaviour
     private bool isSpawnColorTransitioning;
     private bool hasBeenHit;
     private bool hasMovedToFanOffset;
-
+    private bool areaSpawned = false;
     private void Start()
     {
         initialPosition = transform.position;
@@ -256,6 +258,20 @@ public class Audience : MonoBehaviour
             return;
         }
 
+        if (!areaSpawned)
+        {
+            Vector3 pos = transform.position;
+            pos.y = 0.02f;
+            //Vector3 hitPos = other.ClosestPoint(transform.position);
+
+
+            currentArea = Instantiate(
+                urineAreaPrefab,
+                pos,
+                Quaternion.identity
+            );
+        }
+
         IsTouchingPlaneHitFollower = true;
     }
 
@@ -268,9 +284,16 @@ public class Audience : MonoBehaviour
         }
 
         if (!other.CompareTag("Shoben"))
-        {
             return;
+
+        if (currentArea != null)
+        {
+            Destroy(currentArea);
+            currentArea = null;
         }
+
+        areaSpawned = false;
+        Destroy(currentArea, 1.5f);
 
         BeginReturnWait();
     }
