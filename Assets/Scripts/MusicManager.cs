@@ -10,7 +10,7 @@ public class MusicManager : MonoBehaviour
     {
         public AudioClip clip;
         [Min(1f)] public float bpm = 120f;
-        [Min(0f), Tooltip("曲の先頭から最初の拍までの秒数")]
+        [Min(0f), Tooltip("Seconds from the start of the clip to the first beat.")]
         public float firstBeatOffset;
     }
 
@@ -64,14 +64,14 @@ public class MusicManager : MonoBehaviour
     {
         if (musicList == null || musicList.Count == 0)
         {
-            Debug.LogWarning("MusicManagerに音楽が設定されていません。", this);
+            Debug.LogWarning("MusicManager has no music configured.", this);
             return;
         }
 
         List<MusicData> playableMusic = musicList.FindAll(music => music.clip != null && music.bpm > 0f);
         if (playableMusic.Count == 0)
         {
-            Debug.LogWarning("再生可能な音楽がありません。AudioClipとBPMを確認してください。", this);
+            Debug.LogWarning("No playable music was found. Check AudioClip and BPM settings.", this);
             return;
         }
 

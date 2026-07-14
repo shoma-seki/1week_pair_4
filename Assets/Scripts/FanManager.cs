@@ -8,6 +8,10 @@ public class FanManager : MonoBehaviour
 {
     private static FanManager instance;
 
+    [Header("Debug Input")]
+    [SerializeField] private KeyCode decreaseFanKey = KeyCode.L;
+    [SerializeField, Min(1)] private int debugDecreaseAmount = 1;
+
     public static FanManager Instance
     {
         get
@@ -27,6 +31,22 @@ public class FanManager : MonoBehaviour
         }
     }
 
+    public static bool TryResetFanCount()
+    {
+        if (instance == null)
+        {
+            instance = FindAnyObjectByType<FanManager>();
+        }
+
+        if (instance == null)
+        {
+            return false;
+        }
+
+        instance.ResetFanCount();
+        return true;
+    }
+
     public int FanCount { get; private set; }
     public event Action<int> FanCountChanged;
 
@@ -40,6 +60,14 @@ public class FanManager : MonoBehaviour
 
         instance = this;
         DontDestroyOnLoad(gameObject);
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(decreaseFanKey))
+        {
+            RemoveFan(debugDecreaseAmount);
+        }
     }
 
     public void AddFan()

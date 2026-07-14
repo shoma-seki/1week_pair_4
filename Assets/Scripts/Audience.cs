@@ -31,7 +31,7 @@ public class Audience : MonoBehaviour
     [SerializeField] private Color waitingColor = Color.black;
 
     [Header("Fire")]
-    [SerializeField, Min(0f)] private float fanPointDecreasePerSecond = 1f;
+    [SerializeField, Min(0f)] private float fanPointDecreasePerSecond = 0.8f;
     private bool isTouchingFire;
     [SerializeField] private float fireDecreasePerSecond = 1f;
 

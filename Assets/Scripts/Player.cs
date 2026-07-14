@@ -33,7 +33,7 @@ public class Player : MonoBehaviour
 
     [Header("Player Materials")]
     [SerializeField] private Renderer playerRenderer;
-    [SerializeField, Tooltip("移動中にビートごとに切り替える2つのマテリアル")]
+    [SerializeField, Tooltip("移動中に拍ごとに切り替える2つのマテリアル")]
     private Material[] movementMaterials = new Material[2];
     [SerializeField, Tooltip("左クリックを離したときにランダムで表示するマテリアル")]
     private Material[] stoppedMaterials;

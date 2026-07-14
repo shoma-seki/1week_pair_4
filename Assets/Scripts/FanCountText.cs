@@ -1,6 +1,8 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 /// <summary>
 /// FanManager が管理しているファン数を UI に表示します。
@@ -19,12 +21,18 @@ public class FanCountText : MonoBehaviour
 
     [Header("Count Change Animation")]
     [SerializeField] private Color increaseColor = new Color(1f, 0.85f, 0.1f);
-    [SerializeField] private Color decreaseColor = new Color(0.3f, 0.7f, 1f);
+    [SerializeField] private Color decreaseColor = new Color(1f, 0.15f, 0.1f);
     [SerializeField, Min(0f)] private float colorDuration = 0.35f;
     [SerializeField, Min(0.01f)] private float increaseDuration = 0.28f;
     [SerializeField, Min(0f)] private float increaseScaleAmount = 0.22f;
     [SerializeField, Min(0.01f)] private float decreaseDuration = 0.28f;
     [SerializeField, Min(0f)] private float decreaseMoveDistance = 18f;
+
+    [Header("Decrease Vignette")]
+    [SerializeField] private Volume vignetteVolume;
+    [SerializeField] private Color decreaseVignetteColor = new Color(1f, 0f, 0f);
+    [SerializeField, Range(0f, 1f)] private float decreaseVignetteIntensity = 0.55f;
+    [SerializeField, Range(0f, 1f)] private float decreaseVignetteSmoothness = 0.45f;
 
     private FanManager fanManager;
     private Quaternion baseLocalRotation;
@@ -36,6 +44,14 @@ public class FanCountText : MonoBehaviour
     private Coroutine countChangeCoroutine;
     private int currentFanCount;
     private bool hasCurrentFanCount;
+    private Vignette vignette;
+    private Color baseVignetteColor;
+    private float baseVignetteIntensity;
+    private float baseVignetteSmoothness;
+    private bool baseVignetteColorOverrideState;
+    private bool baseVignetteIntensityOverrideState;
+    private bool baseVignetteSmoothnessOverrideState;
+    private bool hasVignette;
 
     private void OnEnable()
     {
@@ -43,6 +59,7 @@ public class FanCountText : MonoBehaviour
         rotationTime = 0f;
         hasCurrentFanCount = false;
         CacheTextBaseValues();
+        CacheVignette();
 
         fanManager = FanManager.Instance;
         fanManager.FanCountChanged += UpdateText;
@@ -61,6 +78,7 @@ public class FanCountText : MonoBehaviour
         transform.localRotation = baseLocalRotation;
         StopCountChangeAnimation();
         ResetTextVisuals();
+        ResetVignette();
 
         if (fanManager != null)
         {
@@ -104,6 +122,7 @@ public class FanCountText : MonoBehaviour
 
         StopCountChangeAnimation();
         ResetTextVisuals();
+        ResetVignette();
         CacheTextBaseValues();
         countChangeCoroutine = StartCoroutine(AnimateCountChange(isIncrease));
     }
@@ -137,13 +156,77 @@ public class FanCountText : MonoBehaviour
             {
                 float drop = Mathf.Sin(moveRate * Mathf.PI) * decreaseMoveDistance;
                 fanCountRectTransform.anchoredPosition = baseTextAnchoredPosition + Vector2.down * drop;
+                ApplyDecreaseVignette(moveRate);
             }
 
             yield return null;
         }
 
         ResetTextVisuals();
+        ResetVignette();
         countChangeCoroutine = null;
+    }
+
+    private void CacheVignette()
+    {
+        hasVignette = false;
+
+        if (vignetteVolume == null)
+        {
+            vignetteVolume = FindAnyObjectByType<Volume>();
+        }
+
+        if (vignetteVolume == null || vignetteVolume.profile == null)
+        {
+            return;
+        }
+
+        if (!vignetteVolume.profile.TryGet(out vignette))
+        {
+            vignette = vignetteVolume.profile.Add<Vignette>(true);
+        }
+
+        baseVignetteColor = vignette.color.value;
+        baseVignetteIntensity = vignette.intensity.value;
+        baseVignetteSmoothness = vignette.smoothness.value;
+        baseVignetteColorOverrideState = vignette.color.overrideState;
+        baseVignetteIntensityOverrideState = vignette.intensity.overrideState;
+        baseVignetteSmoothnessOverrideState = vignette.smoothness.overrideState;
+        hasVignette = true;
+    }
+
+    private void ApplyDecreaseVignette(float rate)
+    {
+        if (!hasVignette || vignette == null)
+        {
+            return;
+        }
+
+        float pulse = Mathf.Sin(rate * Mathf.PI);
+        float targetIntensity = Mathf.Max(baseVignetteIntensity, decreaseVignetteIntensity);
+        float targetSmoothness = Mathf.Max(baseVignetteSmoothness, decreaseVignetteSmoothness);
+
+        vignette.color.overrideState = true;
+        vignette.intensity.overrideState = true;
+        vignette.smoothness.overrideState = true;
+        vignette.color.value = Color.Lerp(baseVignetteColor, decreaseVignetteColor, pulse);
+        vignette.intensity.value = Mathf.Lerp(baseVignetteIntensity, targetIntensity, pulse);
+        vignette.smoothness.value = Mathf.Lerp(baseVignetteSmoothness, targetSmoothness, pulse);
+    }
+
+    private void ResetVignette()
+    {
+        if (!hasVignette || vignette == null)
+        {
+            return;
+        }
+
+        vignette.color.value = baseVignetteColor;
+        vignette.intensity.value = baseVignetteIntensity;
+        vignette.smoothness.value = baseVignetteSmoothness;
+        vignette.color.overrideState = baseVignetteColorOverrideState;
+        vignette.intensity.overrideState = baseVignetteIntensityOverrideState;
+        vignette.smoothness.overrideState = baseVignetteSmoothnessOverrideState;
     }
 
     private void CacheTextBaseValues()
