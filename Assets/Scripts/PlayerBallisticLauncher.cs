@@ -29,6 +29,7 @@ public class PlayerBallisticLauncher : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float thirdStageWobbleMultiplier = 0.3f;
     [SerializeField, Min(0.01f)] private float disappearDuration = 0.35f;
     [SerializeField] private Color streamColor = new Color(1f, 0.82f, 0.12f, 0.9f);
+    [SerializeField, Min(0f)] private float rainbowScrollSpeed = 0.5f;
 
     [Tooltip("三段階目の間だけ再生するプレハブ。LineRenderer があれば放物線として更新します。")]
 
@@ -224,7 +225,7 @@ public class PlayerBallisticLauncher : MonoBehaviour
         renderer.positionCount = Mathf.Max(2, streamSegments);
         renderer.widthMultiplier = streamWidth * strengthMultiplier;
         renderer.colorGradient = player != null && player.CurrentUrineStage == Player.UrineStage.Third
-            ? CreateRainbowGradient(streamColor.a)
+            ? CreateRainbowGradient(streamColor.a, animationTime * rainbowScrollSpeed)
             : CreateStreamGradient(streamColor);
         renderer.widthCurve = CreateVisibleWidthCurve(0f);
 
@@ -382,20 +383,19 @@ public class PlayerBallisticLauncher : MonoBehaviour
         return gradient;
     }
 
-    private static Gradient CreateRainbowGradient(float startAlpha)
+    private static Gradient CreateRainbowGradient(float startAlpha, float scrollPhase)
     {
         Gradient gradient = new Gradient();
+        GradientColorKey[] colorKeys = new GradientColorKey[7];
+        for (int i = 0; i < colorKeys.Length; i++)
+        {
+            float position = i / (float)(colorKeys.Length - 1);
+            float hue = Mathf.Repeat(position - scrollPhase, 1f);
+            colorKeys[i] = new GradientColorKey(Color.HSVToRGB(hue, 1f, 1f), position);
+        }
+
         gradient.SetKeys(
-            new[]
-            {
-                new GradientColorKey(Color.red, 0f),
-                new GradientColorKey(new Color(1f, 0.5f, 0f), 1f / 6f),
-                new GradientColorKey(Color.yellow, 2f / 6f),
-                new GradientColorKey(Color.green, 3f / 6f),
-                new GradientColorKey(Color.cyan, 4f / 6f),
-                new GradientColorKey(Color.blue, 5f / 6f),
-                new GradientColorKey(Color.magenta, 1f)
-            },
+            colorKeys,
             new[]
             {
                 new GradientAlphaKey(startAlpha, 0f),

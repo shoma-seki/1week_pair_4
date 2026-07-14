@@ -14,6 +14,12 @@ public class Audience : MonoBehaviour
     [SerializeField, Min(0f)] private float fanPointPerSecond = 1f;
     [SerializeField, Min(0.01f)] private float fanPointToBecomeFan = 3f;
 
+    [Header("Fan Up Effect")]
+    [SerializeField] private GameObject fanUpPrefab;
+    [SerializeField] private Vector3 fanUpHeadOffset = new Vector3(0f, 2f, 0f);
+    [SerializeField, Min(0f)] private float fanUpRiseDistance = 1f;
+    [SerializeField, Min(0f)] private float fanUpDuration = 1f;
+
     [Header("Movement")]
     [SerializeField] private Vector3 hitOffset;
     [SerializeField] private float moveDuration = 0.3f;
@@ -143,6 +149,33 @@ public class Audience : MonoBehaviour
         IsFan = true;
         FanManager.Instance.AddFan();
         MoveToFanOffset();
+        PlayFanUpEffect();
+    }
+
+    private void PlayFanUpEffect()
+    {
+        if (fanUpPrefab == null)
+        {
+            Debug.LogWarning(
+                $"FanUp prefab is not assigned on '{name}'. Fan-up effect was skipped.",
+                this
+            );
+            return;
+        }
+
+        GameObject effectObject = Instantiate(
+            fanUpPrefab,
+            transform.position + fanUpHeadOffset,
+            fanUpPrefab.transform.rotation
+        );
+
+        FanUpEffect effect = effectObject.GetComponent<FanUpEffect>();
+        if (effect == null)
+        {
+            effect = effectObject.AddComponent<FanUpEffect>();
+        }
+
+        effect.Play(fanUpRiseDistance, fanUpDuration);
     }
 
     public void DecreaseFanPoint()
@@ -365,5 +398,7 @@ public class Audience : MonoBehaviour
     {
         fanPointPerSecond = Mathf.Max(0f, fanPointPerSecond);
         fanPointToBecomeFan = Mathf.Max(0.01f, fanPointToBecomeFan);
+        fanUpRiseDistance = Mathf.Max(0f, fanUpRiseDistance);
+        fanUpDuration = Mathf.Max(0f, fanUpDuration);
     }
 }

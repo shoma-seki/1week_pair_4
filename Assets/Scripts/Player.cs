@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -38,21 +39,30 @@ public class Player : MonoBehaviour
     [SerializeField, Tooltip("左クリックを離したときにランダムで表示するマテリアル")]
     private Material[] stoppedMaterials;
 
-    [Header("Check Collider Spawn")]
-    [SerializeField, Tooltip("CheckColliderタグに触れたときに生成するPrefab")]
-    private GameObject checkColliderSpawnPrefab;
-    [SerializeField, Tooltip("触れたCheckColliderの位置から加算するオフセット")]
-    private Vector3 checkColliderSpawnOffset;
-    [SerializeField, Tooltip("接触時に一時的に表示する2つのUI Image")]
-    private Image[] checkColliderImages = new Image[2];
+    [Header("Obstacle Approach Feedback")]
+    [SerializeField, Tooltip("障害物の接近時に一時的に表示する2つのUI Image")]
+    private Image[] obstacleApproachImages = new Image[2];
+    [SerializeField, Tooltip("障害物の接近時にImageと同時表示するTextMeshPro")]
+    private TMP_Text obstacleApproachText;
     [SerializeField, Min(0.01f), Tooltip("Imageが現れるまでの時間（秒）")]
-    private float checkColliderImageFadeInDuration = 0.15f;
+    private float obstacleApproachImageFadeInDuration = 0.15f;
     [SerializeField, Min(0f), Tooltip("Imageの表示を維持する時間（秒）")]
-    private float checkColliderImageDuration = 1f;
+    private float obstacleApproachImageDuration = 1f;
     [SerializeField, Min(0.01f), Tooltip("Imageが消えるまでの時間（秒）")]
-    private float checkColliderImageFadeOutDuration = 0.35f;
+    private float obstacleApproachImageFadeOutDuration = 0.35f;
+
+    [Header("Obstacle Hit Stop (Adjust Here)")]
+    [SerializeField, Min(0f), Tooltip("Duration of the obstacle-hit stop in seconds.")]
+    private float obstacleHitStopDuration = 0.08f;
+    [SerializeField, Range(0f, 1f), Tooltip("Time scale during the hit stop. Zero completely freezes gameplay.")]
+    private float obstacleHitStopTimeScale = 0f;
+    [SerializeField, Tooltip("ヒットストップ中にCanvas上へ表示する2つのUI Image")]
+    private Image[] obstacleHitImages = new Image[2];
+    [SerializeField, Min(0f), Tooltip("1枚目から2枚目を表示するまでの実時間（秒）")]
+    private float obstacleHitSecondImageDelay = 0.04f;
 
     private MusicManager musicManager;
+    private CameraFollow cameraFollow;
     private Vector3 moveStart;
     private Vector3 moveTarget;
     private Vector3 originalScale;
@@ -66,8 +76,11 @@ public class Player : MonoBehaviour
     private float urineHoldDuration;
     private int movementMaterialIndex;
     private System.Random materialRandom;
-    private Coroutine checkColliderImageCoroutine;
-    private float[] checkColliderImageTargetAlphas;
+    private Coroutine obstacleApproachImageCoroutine;
+    private Coroutine obstacleHitStopCoroutine;
+    private float timeScaleBeforeHitStop = 1f;
+    private float[] obstacleApproachImageTargetAlphas;
+    private float obstacleApproachTextTargetAlpha = 1f;
     private bool wasUrinating;
     private UrineStage previousUrineStage;
 
@@ -103,21 +116,38 @@ public class Player : MonoBehaviour
 
     public event Action<float, float> UrineChanged;
     public event Action<float> DistanceChanged;
-    public event Action CheckColliderEntered;
+    public event Action ObstacleApproached;
+    public event Action ObstacleHit;
+
+    public void NotifyObstacleHit()
+    {
+        if (cameraFollow == null)
+        {
+            cameraFollow = FindAnyObjectByType<CameraFollow>();
+        }
+
+        // Trigger the camera directly before changing Time.timeScale.  This does
+        // not depend on CameraFollow having subscribed to this Player in Start().
+        cameraFollow?.PlayObstacleHitShake();
+        PlayObstacleHitStop();
+        ObstacleHit?.Invoke();
+    }
 
     private void Awake()
     {
         currentUrine = maxUrine;
         previousUrineStage = CurrentUrineStage;
         materialRandom = new System.Random(Guid.NewGuid().GetHashCode());
+        cameraFollow = FindAnyObjectByType<CameraFollow>();
 
         if (playerRenderer == null)
         {
             playerRenderer = GetComponentInChildren<Renderer>();
         }
 
-        CacheCheckColliderImageAlphas();
-        SetCheckColliderImagesEnabled(false);
+        CacheObstacleApproachImageAlphas();
+        SetObstacleApproachImagesEnabled(false);
+        SetObstacleHitImagesEnabled(false);
     }
 
     private void Start()
@@ -137,10 +167,144 @@ public class Player : MonoBehaviour
 
     private void OnDestroy()
     {
+        RestoreTimeScaleAfterHitStop();
+        SetObstacleHitImagesEnabled(false);
+
         if (musicManager != null)
         {
             musicManager.Beat -= OnBeat;
         }
+    }
+
+    private void PlayObstacleHitStop()
+    {
+        if (obstacleHitStopDuration <= 0f)
+        {
+            SetObstacleHitImagesEnabled(false);
+            return;
+        }
+
+        if (obstacleHitStopCoroutine != null)
+        {
+            StopCoroutine(obstacleHitStopCoroutine);
+        }
+        else
+        {
+            timeScaleBeforeHitStop = Time.timeScale;
+        }
+
+        obstacleHitStopCoroutine = StartCoroutine(ObstacleHitStop());
+    }
+
+    private IEnumerator ObstacleHitStop()
+    {
+        SetObstacleHitImagesEnabled(false);
+        RandomizeObstacleHitImages();
+        Time.timeScale = obstacleHitStopTimeScale;
+
+        ShowObstacleHitImageWithSound(0);
+
+        float secondImageDelay = Mathf.Min(obstacleHitSecondImageDelay, obstacleHitStopDuration);
+        if (secondImageDelay > 0f)
+        {
+            yield return new WaitForSecondsRealtime(secondImageDelay);
+        }
+
+        ShowObstacleHitImageWithSound(1);
+
+        float remainingDuration = obstacleHitStopDuration - secondImageDelay;
+        if (remainingDuration > 0f)
+        {
+            yield return new WaitForSecondsRealtime(remainingDuration);
+        }
+
+        SetObstacleHitImagesEnabled(false);
+        RestoreTimeScaleAfterHitStop();
+    }
+
+    private void ShowObstacleHitImageWithSound(int index)
+    {
+        if (obstacleHitImages == null || index < 0 || index >= obstacleHitImages.Length)
+        {
+            return;
+        }
+
+        Image image = obstacleHitImages[index];
+        if (image == null)
+        {
+            return;
+        }
+
+        image.enabled = true;
+        image.raycastTarget = false;
+        GameAudioManager.Instance?.PlayBecha();
+    }
+
+    private void RandomizeObstacleHitImages()
+    {
+        foreach (Image image in obstacleHitImages ?? Array.Empty<Image>())
+        {
+            if (image == null)
+            {
+                continue;
+            }
+
+            RectTransform imageRect = image.rectTransform;
+            RectTransform parentRect = imageRect.parent as RectTransform;
+            if (parentRect != null)
+            {
+                // Keep the image's centre within its parent Canvas area.  The
+                // half diagonal is used as padding so rotation does not push it
+                // outside the screen when enough room is available.
+                Vector2 parentSize = parentRect.rect.size;
+                float halfDiagonal = imageRect.rect.size.magnitude * 0.5f;
+                float horizontalPadding = parentSize.x > 0f
+                    ? Mathf.Clamp01(halfDiagonal / parentSize.x)
+                    : 0f;
+                float verticalPadding = parentSize.y > 0f
+                    ? Mathf.Clamp01(halfDiagonal / parentSize.y)
+                    : 0f;
+
+                float anchorX = horizontalPadding < 0.5f
+                    ? UnityEngine.Random.Range(horizontalPadding, 1f - horizontalPadding)
+                    : 0.5f;
+                float anchorY = verticalPadding < 0.5f
+                    ? UnityEngine.Random.Range(verticalPadding, 1f - verticalPadding)
+                    : 0.5f;
+
+                Vector2 randomAnchor = new Vector2(anchorX, anchorY);
+                imageRect.anchorMin = randomAnchor;
+                imageRect.anchorMax = randomAnchor;
+                imageRect.anchoredPosition = Vector2.zero;
+            }
+
+            imageRect.localRotation = Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(0f, 360f));
+        }
+    }
+
+    private void SetObstacleHitImagesEnabled(bool isEnabled)
+    {
+        foreach (Image image in obstacleHitImages ?? Array.Empty<Image>())
+        {
+            if (image == null)
+            {
+                continue;
+            }
+
+            image.enabled = isEnabled;
+            image.raycastTarget = false;
+        }
+    }
+
+    private void RestoreTimeScaleAfterHitStop()
+    {
+        if (obstacleHitStopCoroutine == null)
+        {
+            return;
+        }
+
+        Time.timeScale = timeScaleBeforeHitStop;
+        obstacleHitStopCoroutine = null;
     }
 
     private void Update()
@@ -182,43 +346,30 @@ public class Player : MonoBehaviour
         transform.localScale = originalScale;
     }
 
-    private void OnTriggerEnter(Collider other)
+    public void NotifyObstacleApproached()
     {
-        if (!other.CompareTag("CheckCollider"))
+        if (obstacleApproachImageCoroutine != null)
         {
-            return;
+            StopCoroutine(obstacleApproachImageCoroutine);
         }
 
-        if (checkColliderSpawnPrefab != null)
-        {
-            Instantiate(
-                checkColliderSpawnPrefab,
-                other.transform.position + checkColliderSpawnOffset,
-                other.transform.rotation);
-        }
-
-        if (checkColliderImageCoroutine != null)
-        {
-            StopCoroutine(checkColliderImageCoroutine);
-        }
-
-        checkColliderImageCoroutine = StartCoroutine(ShowCheckColliderImages());
+        obstacleApproachImageCoroutine = StartCoroutine(ShowObstacleApproachImages());
         GameAudioManager.Instance?.PlayObstacle();
-        CheckColliderEntered?.Invoke();
+        ObstacleApproached?.Invoke();
     }
 
-    private IEnumerator ShowCheckColliderImages()
+    private IEnumerator ShowObstacleApproachImages()
     {
-        SetCheckColliderImagesAlpha(0f);
-        SetCheckColliderImagesEnabled(true);
-        yield return AnimateCheckColliderImageAlpha(0f, 1f, checkColliderImageFadeInDuration);
-        yield return new WaitForSeconds(checkColliderImageDuration);
-        yield return AnimateCheckColliderImageAlpha(1f, 0f, checkColliderImageFadeOutDuration);
-        SetCheckColliderImagesEnabled(false);
-        checkColliderImageCoroutine = null;
+        SetObstacleApproachImagesAlpha(0f);
+        SetObstacleApproachImagesEnabled(true);
+        yield return AnimateObstacleApproachImageAlpha(0f, 1f, obstacleApproachImageFadeInDuration);
+        yield return new WaitForSeconds(obstacleApproachImageDuration);
+        yield return AnimateObstacleApproachImageAlpha(1f, 0f, obstacleApproachImageFadeOutDuration);
+        SetObstacleApproachImagesEnabled(false);
+        obstacleApproachImageCoroutine = null;
     }
 
-    private IEnumerator AnimateCheckColliderImageAlpha(float from, float to, float duration)
+    private IEnumerator AnimateObstacleApproachImageAlpha(float from, float to, float duration)
     {
         float elapsed = 0f;
 
@@ -226,62 +377,69 @@ public class Player : MonoBehaviour
         {
             elapsed += Time.deltaTime;
             float progress = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
-            SetCheckColliderImagesAlpha(Mathf.Lerp(from, to, progress));
+            SetObstacleApproachImagesAlpha(Mathf.Lerp(from, to, progress));
             yield return null;
         }
 
-        SetCheckColliderImagesAlpha(to);
+        SetObstacleApproachImagesAlpha(to);
     }
 
-    private void CacheCheckColliderImageAlphas()
+    private void CacheObstacleApproachImageAlphas()
     {
-        checkColliderImageTargetAlphas = new float[checkColliderImages?.Length ?? 0];
+        obstacleApproachImageTargetAlphas = new float[obstacleApproachImages?.Length ?? 0];
 
-        for (int i = 0; i < checkColliderImageTargetAlphas.Length; i++)
+        for (int i = 0; i < obstacleApproachImageTargetAlphas.Length; i++)
         {
-            checkColliderImageTargetAlphas[i] = checkColliderImages[i] != null
-                ? checkColliderImages[i].color.a
+            obstacleApproachImageTargetAlphas[i] = obstacleApproachImages[i] != null
+                ? obstacleApproachImages[i].color.a
                 : 1f;
         }
+
+        if (obstacleApproachText != null)
+        {
+            obstacleApproachTextTargetAlpha = obstacleApproachText.color.a;
+        }
     }
 
-    private void SetCheckColliderImagesAlpha(float normalizedAlpha)
+    private void SetObstacleApproachImagesAlpha(float normalizedAlpha)
     {
-        if (checkColliderImages == null)
+        for (int i = 0; i < (obstacleApproachImages?.Length ?? 0); i++)
         {
-            return;
-        }
-
-        for (int i = 0; i < checkColliderImages.Length; i++)
-        {
-            Image image = checkColliderImages[i];
+            Image image = obstacleApproachImages[i];
             if (image == null)
             {
                 continue;
             }
 
             Color color = image.color;
-            float targetAlpha = i < checkColliderImageTargetAlphas.Length
-                ? checkColliderImageTargetAlphas[i]
+            float targetAlpha = i < obstacleApproachImageTargetAlphas.Length
+                ? obstacleApproachImageTargetAlphas[i]
                 : 1f;
             color.a = targetAlpha * normalizedAlpha;
             image.color = color;
         }
+
+        if (obstacleApproachText != null)
+        {
+            Color color = obstacleApproachText.color;
+            color.a = obstacleApproachTextTargetAlpha * normalizedAlpha;
+            obstacleApproachText.color = color;
+        }
     }
 
-    private void SetCheckColliderImagesEnabled(bool isEnabled)
+    private void SetObstacleApproachImagesEnabled(bool isEnabled)
     {
-        if (checkColliderImages == null)
-        {
-            return;
-        }
-
-        foreach (Image image in checkColliderImages)
+        foreach (Image image in obstacleApproachImages ?? Array.Empty<Image>())
         {
             if (image != null)
             {
                 image.enabled = isEnabled;
             }
+        }
+
+        if (obstacleApproachText != null)
+        {
+            obstacleApproachText.enabled = isEnabled;
         }
     }
 
@@ -439,6 +597,9 @@ public class Player : MonoBehaviour
         thirdStageAimSpeedMultiplier = Mathf.Clamp01(thirdStageAimSpeedMultiplier);
         secondStageArcHeightMultiplier = Mathf.Clamp(secondStageArcHeightMultiplier, 0.05f, 1f);
         thirdStageArcHeightMultiplier = Mathf.Clamp(thirdStageArcHeightMultiplier, 0.05f, 1f);
+        obstacleHitStopDuration = Mathf.Max(0f, obstacleHitStopDuration);
+        obstacleHitStopTimeScale = Mathf.Clamp01(obstacleHitStopTimeScale);
+        obstacleHitSecondImageDelay = Mathf.Max(0f, obstacleHitSecondImageDelay);
 
         if (Application.isPlaying && currentUrine > maxUrine)
         {

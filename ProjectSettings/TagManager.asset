@@ -7,7 +7,6 @@ TagManager:
   - Plane
   - Shoben
   - Audience
-  - CheckCollider
   - Fire
   layers:
   - Default

@@ -12,6 +12,7 @@ public class GameAudioManager : MonoBehaviour
     [SerializeField] private AudioClip posingClip;
     [SerializeField] private AudioClip obstacleClip;
     [SerializeField] private AudioClip fanIncreaseClip;
+    [SerializeField] private AudioClip bechaClip;
 
     [Header("Sources")]
     [SerializeField, Range(0f, 1f)] private float loopVolume = 1f;
@@ -73,6 +74,7 @@ public class GameAudioManager : MonoBehaviour
     public void PlayPosing() => PlayOneShot(posingClip);
     public void PlayObstacle() => PlayOneShot(obstacleClip);
     public void PlayFanIncrease() => PlayOneShot(fanIncreaseClip);
+    public void PlayBecha() => PlayOneShot(bechaClip);
 
     private void PlayOneShot(AudioClip clip)
     {
