@@ -223,8 +223,9 @@ public class PlayerBallisticLauncher : MonoBehaviour
         renderer.enabled = true;
         renderer.positionCount = Mathf.Max(2, streamSegments);
         renderer.widthMultiplier = streamWidth * strengthMultiplier;
-        renderer.startColor = streamColor;
-        renderer.endColor = new Color(streamColor.r, streamColor.g, streamColor.b, 0.35f);
+        renderer.colorGradient = player != null && player.CurrentUrineStage == Player.UrineStage.Third
+            ? CreateRainbowGradient(streamColor.a)
+            : CreateStreamGradient(streamColor);
         renderer.widthCurve = CreateVisibleWidthCurve(0f);
 
         int count = renderer.positionCount;
@@ -362,6 +363,45 @@ public class PlayerBallisticLauncher : MonoBehaviour
             new Keyframe(edge, 0f),
             new Keyframe(featherEnd, Mathf.Lerp(1f, 0.2f, featherEnd)),
             new Keyframe(1f, 0.2f));
+    }
+
+    private static Gradient CreateStreamGradient(Color color)
+    {
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(
+            new[]
+            {
+                new GradientColorKey(color, 0f),
+                new GradientColorKey(color, 1f)
+            },
+            new[]
+            {
+                new GradientAlphaKey(color.a, 0f),
+                new GradientAlphaKey(0.35f, 1f)
+            });
+        return gradient;
+    }
+
+    private static Gradient CreateRainbowGradient(float startAlpha)
+    {
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(
+            new[]
+            {
+                new GradientColorKey(Color.red, 0f),
+                new GradientColorKey(new Color(1f, 0.5f, 0f), 1f / 6f),
+                new GradientColorKey(Color.yellow, 2f / 6f),
+                new GradientColorKey(Color.green, 3f / 6f),
+                new GradientColorKey(Color.cyan, 4f / 6f),
+                new GradientColorKey(Color.blue, 5f / 6f),
+                new GradientColorKey(Color.magenta, 1f)
+            },
+            new[]
+            {
+                new GradientAlphaKey(startAlpha, 0f),
+                new GradientAlphaKey(0.35f, 1f)
+            });
+        return gradient;
     }
 
     public static Vector3 CalculateLaunchVelocity(
