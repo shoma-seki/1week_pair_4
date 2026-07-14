@@ -4,6 +4,7 @@ public class Fire : MonoBehaviour
 {
     [Header("Life")]
     [SerializeField] private float lifeTime = 5f;
+    [SerializeField] private float extinguishTime = 2f;   // Á‰Î‚É•K—v‚ÈŽžŠÔ
 
     [Header("Grow")]
     [SerializeField] private float growSpeed = 1f;
@@ -11,6 +12,7 @@ public class Fire : MonoBehaviour
 
     [SerializeField] private MeshRenderer meshRenderer;
     private bool isActive = false;
+    private float urineContactTime = 0f;
 
     [Header("Shake")]
     [SerializeField] private float shakeAmount = 0.05f;     // —h‚ê‚é•
@@ -28,6 +30,8 @@ public class Fire : MonoBehaviour
         transform.localScale = Vector3.zero;
 
         startPosition = transform.position;
+
+        Destroy(gameObject, lifeTime);
     }
 
     // Update is called once per frame
@@ -64,5 +68,26 @@ public class Fire : MonoBehaviour
         meshRenderer.enabled = true;
 
         Destroy(gameObject, lifeTime);
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (!other.CompareTag("Shoben"))
+            return;
+
+        urineContactTime += Time.deltaTime;
+
+        if (urineContactTime >= extinguishTime)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (!other.CompareTag("Shoben"))
+            return;
+
+        urineContactTime = 0f;
     }
 }
