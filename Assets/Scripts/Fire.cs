@@ -19,6 +19,11 @@ public class Fire : MonoBehaviour
     [SerializeField] private float shakeSpeed = 8f;         // —h‚ê‚é‘¬‚³
 
     private Vector3 startPosition;
+
+    [SerializeField] private float pulseSpeed = 4f;
+    [SerializeField] private float pulseAmount = 0.1f;
+
+    private Vector3 baseScale;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {

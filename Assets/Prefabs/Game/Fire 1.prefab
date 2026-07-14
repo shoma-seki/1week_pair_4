@@ -164,6 +164,7 @@ GameObject:
   - component: {fileID: 1607424361881545863}
   - component: {fileID: 3841049322703762608}
   - component: {fileID: 9192394289473903750}
+  - component: {fileID: 6221656059918782917}
   - component: {fileID: 7480919747298729505}
   - component: {fileID: 1341181336935638120}
   m_Layer: 0
@@ -244,6 +245,25 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &6221656059918782917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 706562985004873851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d444a74f1a06df48aabcb39c3857269, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FireAnimation
+  fireRenderer: {fileID: 9192394289473903750}
+  fireTextures:
+  - {fileID: 2800000, guid: 7484238d8ec11554580e637db5c2eee4, type: 3}
+  - {fileID: 2800000, guid: 9003213c759883f4cb1fc0663d850db1, type: 3}
+  - {fileID: 2800000, guid: 41ad353721be6eb4eb71e06ae4f27357, type: 3}
+  - {fileID: 2800000, guid: 8dddce88dcaf5d343bbcc521a40969db, type: 3}
+  frameRate: 0.4
 --- !u!114 &7480919747298729505
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -258,11 +278,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Fire
   lifeTime: 15
   extinguishTime: 2
-  growSpeed: 1
-  maxScale: 2
+  growSpeed: 0.5
+  maxScale: 1.5
   meshRenderer: {fileID: 9192394289473903750}
   shakeAmount: 0.3
   shakeSpeed: 8
+  pulseSpeed: 4
+  pulseAmount: 0.1
 --- !u!64 &1341181336935638120
 MeshCollider:
   m_ObjectHideFlags: 0
