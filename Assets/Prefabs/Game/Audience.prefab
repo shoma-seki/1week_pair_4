@@ -63,6 +63,7 @@ MonoBehaviour:
   waitingColor: {r: 0.5849056, g: 0.5849056, b: 0.5849056, a: 1}
   fanPointDecreasePerSecond: 1
   fireDecreasePerSecond: 1
+  urineAreaPrefab: {fileID: 2173495178079076177, guid: 18ef0557d3cfdc843bd0f5b5a50610ae, type: 3}
 --- !u!33 &5348483964508078332
 MeshFilter:
   m_ObjectHideFlags: 0
