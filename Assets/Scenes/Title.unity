@@ -291,10 +291,10 @@ MonoBehaviour:
   holdDuration: 0.12
   returnDuration: 1.2
   returnInterpolationType: 3
-  checkColliderZoomInAmount: 0.35
-  checkColliderZoomInDuration: 0.1
-  checkColliderHoldDuration: 0.25
-  checkColliderReturnDuration: 0.8
+  obstacleApproachZoomInAmount: 0.35
+  obstacleApproachZoomInDuration: 0.1
+  obstacleApproachHoldDuration: 0.25
+  obstacleApproachReturnDuration: 0.8
   stageChangeShakeAmplitude: 1
   stageChangeShakeDuration: 0.25
   thirdStageContinuousShakeAmplitude: 0.35

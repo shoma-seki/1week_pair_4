@@ -127,14 +127,16 @@ MonoBehaviour:
   - {fileID: 2100000, guid: b783743f8d73014489d79c158f130af1, type: 2}
   stoppedMaterials:
   - {fileID: 2100000, guid: f00ceb5e16d45d14fa0cf95d62dd0f4f, type: 2}
-  checkColliderSpawnPrefab: {fileID: 0}
-  checkColliderSpawnOffset: {x: 0, y: 0, z: 0}
-  checkColliderImages:
+  obstacleApproachImages:
   - {fileID: 0}
   - {fileID: 0}
-  checkColliderImageFadeInDuration: 0.15
-  checkColliderImageDuration: 1
-  checkColliderImageFadeOutDuration: 0.35
+  obstacleApproachText: {fileID: 0}
+  obstacleApproachImageFadeInDuration: 0.15
+  obstacleApproachImageDuration: 1
+  obstacleApproachImageFadeOutDuration: 0.35
+  obstacleHitStopDuration: 0.08
+  obstacleHitStopTimeScale: 0
+  obstacleHitSecondImageDelay: 0.04
 --- !u!114 &1146937808978332402
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -163,6 +165,7 @@ MonoBehaviour:
   thirdStageWobbleMultiplier: 0.3
   disappearDuration: 0.35
   streamColor: {r: 0.6839622, g: 0.9753466, b: 1, a: 0.9}
+  rainbowScrollSpeed: 0.5
   mouseButton: 0
 --- !u!65 &-3730702642770730776
 BoxCollider:
@@ -183,7 +186,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 10, y: 10, z: 10}
+  m_Size: {x: 4.17, y: 3.86, z: 6.88}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &7274384141498205519
 GameObject:

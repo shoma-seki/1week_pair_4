@@ -29,6 +29,7 @@ public class PlayerBallisticLauncher : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float thirdStageWobbleMultiplier = 0.3f;
     [SerializeField, Min(0.01f)] private float disappearDuration = 0.35f;
     [SerializeField] private Color streamColor = new Color(1f, 0.82f, 0.12f, 0.9f);
+    [SerializeField, Min(0f)] private float rainbowScrollSpeed = 0.5f;
 
     [Tooltip("三段階目の間だけ再生するプレハブ。LineRenderer があれば放物線として更新します。")]
 
@@ -223,8 +224,9 @@ public class PlayerBallisticLauncher : MonoBehaviour
         renderer.enabled = true;
         renderer.positionCount = Mathf.Max(2, streamSegments);
         renderer.widthMultiplier = streamWidth * strengthMultiplier;
-        renderer.startColor = streamColor;
-        renderer.endColor = new Color(streamColor.r, streamColor.g, streamColor.b, 0.35f);
+        renderer.colorGradient = player != null && player.CurrentUrineStage == Player.UrineStage.Third
+            ? CreateRainbowGradient(streamColor.a, animationTime * rainbowScrollSpeed)
+            : CreateStreamGradient(streamColor);
         renderer.widthCurve = CreateVisibleWidthCurve(0f);
 
         int count = renderer.positionCount;
@@ -362,6 +364,44 @@ public class PlayerBallisticLauncher : MonoBehaviour
             new Keyframe(edge, 0f),
             new Keyframe(featherEnd, Mathf.Lerp(1f, 0.2f, featherEnd)),
             new Keyframe(1f, 0.2f));
+    }
+
+    private static Gradient CreateStreamGradient(Color color)
+    {
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(
+            new[]
+            {
+                new GradientColorKey(color, 0f),
+                new GradientColorKey(color, 1f)
+            },
+            new[]
+            {
+                new GradientAlphaKey(color.a, 0f),
+                new GradientAlphaKey(0.35f, 1f)
+            });
+        return gradient;
+    }
+
+    private static Gradient CreateRainbowGradient(float startAlpha, float scrollPhase)
+    {
+        Gradient gradient = new Gradient();
+        GradientColorKey[] colorKeys = new GradientColorKey[7];
+        for (int i = 0; i < colorKeys.Length; i++)
+        {
+            float position = i / (float)(colorKeys.Length - 1);
+            float hue = Mathf.Repeat(position - scrollPhase, 1f);
+            colorKeys[i] = new GradientColorKey(Color.HSVToRGB(hue, 1f, 1f), position);
+        }
+
+        gradient.SetKeys(
+            colorKeys,
+            new[]
+            {
+                new GradientAlphaKey(startAlpha, 0f),
+                new GradientAlphaKey(0.35f, 1f)
+            });
+        return gradient;
     }
 
     public static Vector3 CalculateLaunchVelocity(

@@ -51,6 +51,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Audience
   fanPointPerSecond: 1
   fanPointToBecomeFan: 2
+  fanUpPrefab: {fileID: 3122364360447041297, guid: 685c36929c43a0f4eb4d7eff8b396459, type: 3}
+  fanUpHeadOffset: {x: 0, y: 6, z: 0}
+  fanUpRiseDistance: 1
+  fanUpDuration: 1
   hitOffset: {x: 0, y: 3, z: 0}
   moveDuration: 0.3
   interpolationType: 2
